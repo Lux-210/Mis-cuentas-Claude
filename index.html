@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mis cuentas de Claude</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Mis cuentas" />
+<meta name="mobile-web-app-capable" content="yes" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap');
+  .font-display { font-family: 'Fraunces', Georgia, serif; }
+  .font-label { font-family: 'IBM Plex Mono', 'Courier New', monospace; }
+  .font-body { font-family: 'Inter', system-ui, sans-serif; }
+  .paper-texture {
+    background-image: radial-gradient(circle, rgba(148,163,184,0.08) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+  body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+function Icon({ name, className, fill = 'none', ...rest }) {
+  const common = {
+    fill,
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    viewBox: '0 0 24 24',
+    className,
+    ...rest,
+  };
+  switch (name) {
+    case 'plus':
+      return (
+        <svg {...common}>
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
+        </svg>
+      );
+    case 'pencil':
+      return (
+        <svg {...common}>
+          <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+          <path d="m15 5 4 4" />
+        </svg>
+      );
+    case 'trash2':
+      return (
+        <svg {...common}>
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+          <path d="M3 6h18" />
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+      );
+    case 'search':
+      return (
+        <svg {...common}>
+          <path d="m21 21-4.34-4.34" />
+          <circle cx="11" cy="11" r="8" />
+        </svg>
+      );
+    case 'x':
+      return (
+        <svg {...common}>
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      );
+    case 'inbox':
+      return (
+        <svg {...common}>
+          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+          <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+        </svg>
+      );
+    case 'arrowLeft':
+      return (
+        <svg {...common}>
+          <path d="m12 19-7-7 7-7" />
+          <path d="M19 12H5" />
+        </svg>
+      );
+    case 'chevronRight':
+      return (
+        <svg {...common}>
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      );
+    case 'star':
+      return (
+        <svg {...common}>
+          <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+        </svg>
+      );
+    case 'download':
+      return (
+        <svg {...common}>
+          <path d="M12 15V3" />
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="m7 10 5 5 5-5" />
+        </svg>
+      );
+    case 'upload':
+      return (
+        <svg {...common}>
+          <path d="M12 3v12" />
+          <path d="m17 8-5-5-5 5" />
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+const PLAN_OPTIONS = ['Free', 'Pro', 'Max', 'Team', 'Enterprise', 'Otro'];
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const STATUS_META = {
+  en_proceso: { label: 'En proceso', badge: 'bg-teal-900 text-teal-300 border-teal-700' },
+  pausado: { label: 'Pausado', badge: 'bg-amber-900 text-amber-300 border-amber-700' },
+  finalizado: { label: 'Finalizado', badge: 'bg-slate-700 text-slate-300 border-slate-500' },
+};
+
+const STATUS_DOT = {
+  en_proceso: 'bg-teal-400',
+  pausado: 'bg-amber-400',
+  finalizado: 'bg-slate-400',
+};
+
+const STATUS_FILTERS = [
+  { value: 'all', label: 'Todos' },
+  ...Object.entries(STATUS_META).map(([value, meta]) => ({ value, label: meta.label })),
+];
+
+const STORAGE_KEY = 'mis-cuentas-claude-data-v1';
+
+function normalizeStatus(status) {
+  if (status === 'terminado') return 'finalizado';
+  if (status === 'activo') return 'en_proceso';
+  return STATUS_META[status] ? status : 'en_proceso';
+}
+
+function statusBreakdown(projects) {
+  const counts = { en_proceso: 0, pausado: 0, finalizado: 0 };
+  projects.forEach(p => {
+    const key = normalizeStatus(p.status);
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return counts;
+}
+
+function sortProjects(projects, sortBy) {
+  if (sortBy === 'name') {
+    return [...projects].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }
+  if (sortBy === 'status') {
+    const order = { en_proceso: 0, pausado: 1, finalizado: 2 };
+    return [...projects].sort((a, b) => order[normalizeStatus(a.status)] - order[normalizeStatus(b.status)]);
+  }
+  return projects;
+}
+
+function sortAccounts(list, sortBy) {
+  const sorted = [...list];
+  if (sortBy === 'email') {
+    sorted.sort((a, b) => a.email.localeCompare(b.email, 'es'));
+  } else if (sortBy === 'projects') {
+    sorted.sort((a, b) => b.projects.length - a.projects.length);
+  }
+  sorted.sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+  return sorted;
+}
+
+function findDuplicateProject(projects, name, excludeId) {
+  const normalized = name.trim().toLowerCase();
+  return projects.find(p => p.id !== excludeId && p.name.trim().toLowerCase() === normalized) || null;
+}
+
+function nextAvailableName(projects, baseName, excludeId) {
+  const taken = new Set(projects.filter(p => p.id !== excludeId).map(p => p.name.trim().toLowerCase()));
+  let n = 2;
+  let candidate = `${baseName} (${n})`;
+  while (taken.has(candidate.toLowerCase())) {
+    n += 1;
+    candidate = `${baseName} (${n})`;
+  }
+  return candidate;
+}
+
+function isDuplicateEmail(list, email, excludeId) {
+  const normalized = email.trim().toLowerCase();
+  return list.some(a => a.id !== excludeId && a.email.trim().toLowerCase() === normalized);
+}
+
+function normalizeText(text) {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return '';
+  return new Date(timestamp).toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function exportAccounts(accounts) {
+  const dataStr = JSON.stringify(accounts, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `mis-cuentas-claude-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function exportSingleAccount(account) {
+  const dataStr = JSON.stringify([account], null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `backup-cuenta-eliminada-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+function emptyAccount() {
+  return { id: uid(), email: '', plan: 'Free', notes: '', favorite: false, projects: [] };
+}
+
+function emptyProject() {
+  return { id: uid(), name: '', status: 'en_proceso', notes: '', createdAt: Date.now() };
+}
+
+function normalizeImportedAccounts(data) {
+  if (!Array.isArray(data)) {
+    throw new Error('El archivo no contiene una lista de cuentas.');
+  }
+  const normalized = data.map(a => ({
+    id: a && a.id ? String(a.id) : uid(),
+    email: a && typeof a.email === 'string' ? a.email : '',
+    plan: a && PLAN_OPTIONS.includes(a.plan) ? a.plan : 'Free',
+    notes: a && typeof a.notes === 'string' ? a.notes : '',
+    favorite: !!(a && a.favorite),
+    projects: Array.isArray(a && a.projects)
+      ? a.projects.map(p => ({
+          id: p && p.id ? String(p.id) : uid(),
+          name: p && typeof p.name === 'string' ? p.name : '',
+          status: p ? normalizeStatus(p.status) : 'en_proceso',
+          notes: p && typeof p.notes === 'string' ? p.notes : '',
+          createdAt: p && typeof p.createdAt === 'number' ? p.createdAt : Date.now(),
+        }))
+      : [],
+  }));
+
+  const seenEmails = new Set();
+  const deduped = [];
+  for (const account of normalized) {
+    const key = account.email.trim().toLowerCase();
+    if (key && seenEmails.has(key)) continue;
+    if (key) seenEmails.add(key);
+    deduped.push(account);
+  }
+  return deduped;
+}
+
+function mergeImportedAccounts(existingAccounts, importedAccounts) {
+  const result = existingAccounts.map(a => ({ ...a, projects: [...a.projects] }));
+  let mergedCount = 0;
+  let newCount = 0;
+  let renamedProjectsCount = 0;
+  let skippedProjectsCount = 0;
+  const addedAccountIds = [];
+  const addedProjectIdsByAccount = {};
+
+  importedAccounts.forEach(incoming => {
+    const key = incoming.email.trim().toLowerCase();
+    const matchIndex = key ? result.findIndex(a => a.email.trim().toLowerCase() === key) : -1;
+
+    if (matchIndex >= 0) {
+      mergedCount += 1;
+      const targetId = result[matchIndex].id;
+      const mergedProjects = [...result[matchIndex].projects];
+      const addedProjectIds = [];
+      incoming.projects.forEach(p => {
+        const alreadyImported = mergedProjects.some(existing => existing.id === p.id);
+        if (alreadyImported) {
+          skippedProjectsCount += 1;
+          return;
+        }
+        let finalName = p.name;
+        if (findDuplicateProject(mergedProjects, finalName, null)) {
+          finalName = nextAvailableName(mergedProjects, finalName, null);
+          renamedProjectsCount += 1;
+        }
+        mergedProjects.push({ ...p, name: finalName });
+        addedProjectIds.push(p.id);
+      });
+      result[matchIndex] = { ...result[matchIndex], projects: mergedProjects };
+      if (addedProjectIds.length > 0) {
+        addedProjectIdsByAccount[targetId] = (addedProjectIdsByAccount[targetId] || []).concat(addedProjectIds);
+      }
+    } else {
+      newCount += 1;
+      result.push(incoming);
+      addedAccountIds.push(incoming.id);
+    }
+  });
+
+  return {
+    accounts: result,
+    mergedCount,
+    newCount,
+    renamedProjectsCount,
+    skippedProjectsCount,
+    addedAccountIds,
+    addedProjectIdsByAccount,
+  };
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return normalizeImportedAccounts(parsed);
+  } catch (err) {
+    return [];
+  }
+}
+
+function AccountsTracker() {
+  const [accounts, setAccounts] = useState(() => loadFromStorage());
+  const [search, setSearch] = useState('');
+  const [planFilter, setPlanFilter] = useState('all');
+  const [accountSortBy, setAccountSortBy] = useState('default');
+  const [accountModal, setAccountModal] = useState(null);
+  const [projectModal, setProjectModal] = useState(null);
+  const [confirmDeleteProject, setConfirmDeleteProject] = useState(null);
+  const [openAccountId, setOpenAccountId] = useState(null);
+  const [accountMenu, setAccountMenu] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [importDialog, setImportDialog] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const confirmTimeout = useRef(null);
+  const menuTimeout = useRef(null);
+  const fileInputRef = useRef(null);
+  const isFirstAccountsRender = useRef(true);
+  const accountsRef = useRef(accounts);
+
+  useEffect(() => {
+    accountsRef.current = accounts;
+  }, [accounts]);
+
+  useEffect(() => {
+    function flushToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(accountsRef.current));
+      } catch (err) {
+        // localStorage lleno o no disponible; no interrumpimos el cierre por esto
+      }
+    }
+    window.addEventListener('beforeunload', flushToStorage);
+    window.addEventListener('pagehide', flushToStorage);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushToStorage();
+    });
+    return () => {
+      window.removeEventListener('beforeunload', flushToStorage);
+      window.removeEventListener('pagehide', flushToStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === 'Escape') {
+        setProjectModal(null);
+        setAccountModal(null);
+        setAccountMenu(null);
+        setConfirmDeleteProject(null);
+        clearTimeout(confirmTimeout.current);
+        setImportDialog(null);
+      }
+    }
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
+  useEffect(() => {
+    if (isFirstAccountsRender.current) {
+      isFirstAccountsRender.current = false;
+      return;
+    }
+    setHasUnsavedChanges(true);
+  }, [accounts]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+    } catch (err) {
+      // localStorage lleno o no disponible; no interrumpimos la app por esto
+    }
+  }, [accounts]);
+
+  function showToast(message, undo) {
+    const id = uid();
+    setToasts(prev => [...prev, { id, message, undo }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 5000);
+  }
+
+  function toggleAccountMenu(accountId) {
+    setAccountMenu(prev => (prev && prev.accountId === accountId ? null : { accountId, mode: 'options' }));
+    clearTimeout(menuTimeout.current);
+  }
+
+  function closeAccountMenu() {
+    setAccountMenu(null);
+    clearTimeout(menuTimeout.current);
+  }
+
+  function requestDeleteAccount(accountId) {
+    setAccountMenu({ accountId, mode: 'confirm' });
+    clearTimeout(menuTimeout.current);
+    menuTimeout.current = setTimeout(() => setAccountMenu(null), 3000);
+  }
+
+  function confirmDeleteAccountNow(accountId) {
+    const removed = accounts.find(a => a.id === accountId);
+    if (removed) {
+      exportSingleAccount(removed);
+    }
+    setAccounts(prev => prev.filter(a => a.id !== accountId));
+    if (openAccountId === accountId) setOpenAccountId(null);
+    closeAccountMenu();
+    if (removed) {
+      showToast('Cuenta eliminada', () => {
+        setAccounts(prev => [...prev, removed]);
+      });
+    }
+  }
+
+  function toggleFavorite(accountId) {
+    setAccounts(prev => prev.map(a => (a.id === accountId ? { ...a, favorite: !a.favorite } : a)));
+  }
+
+  function startEditAccount(account) {
+    setAccountModal({ mode: 'edit', data: account });
+    closeAccountMenu();
+  }
+
+  function saveAccount(form) {
+    if (accountModal.mode === 'new') {
+      setAccounts(prev => [...prev, form]);
+    } else {
+      setAccounts(prev =>
+        prev.map(a => (a.id === form.id ? { ...a, email: form.email, plan: form.plan, notes: form.notes } : a))
+      );
+    }
+    setAccountModal(null);
+  }
+
+  function saveProject(accountId, form) {
+    setAccounts(prev =>
+      prev.map(a => {
+        if (a.id !== accountId) return a;
+        const exists = a.projects.some(p => p.id === form.id);
+        const projects = exists ? a.projects.map(p => (p.id === form.id ? form : p)) : [...a.projects, form];
+        return { ...a, projects };
+      })
+    );
+    setProjectModal(null);
+  }
+
+  function openConfirmProject(accountId, projectId) {
+    setConfirmDeleteProject({ accountId, projectId });
+    clearTimeout(confirmTimeout.current);
+    confirmTimeout.current = setTimeout(() => setConfirmDeleteProject(null), 3000);
+  }
+
+  function deleteProject(accountId, projectId) {
+    const account = accounts.find(a => a.id === accountId);
+    const removed = account ? account.projects.find(p => p.id === projectId) : null;
+    setAccounts(prev =>
+      prev.map(a => (a.id === accountId ? { ...a, projects: a.projects.filter(p => p.id !== projectId) } : a))
+    );
+    setConfirmDeleteProject(null);
+    if (removed) {
+      showToast('Proyecto eliminado', () => {
+        setAccounts(prev => prev.map(a => (a.id === accountId ? { ...a, projects: [...a.projects, removed] } : a)));
+      });
+    }
+  }
+
+  function handleImportFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = event => {
+      let normalized;
+      let duplicatesRemoved = 0;
+      try {
+        const parsed = JSON.parse(event.target.result);
+        normalized = normalizeImportedAccounts(parsed);
+        duplicatesRemoved = parsed.length - normalized.length;
+      } catch (err) {
+        setImportDialog({
+          type: 'error',
+          message: 'No se pudo importar el archivo. Verificá que sea un JSON exportado desde esta herramienta.',
+        });
+        return;
+      }
+      if (normalized.length === 0) {
+        setImportDialog({ type: 'error', message: 'El archivo no contiene cuentas para importar.' });
+        return;
+      }
+      const merge = mergeImportedAccounts(accounts, normalized);
+      if (accounts.length > 0 || duplicatesRemoved > 0) {
+        setImportDialog({ type: 'confirm', merge, duplicatesRemoved });
+      } else {
+        applyImport(merge.accounts, merge.addedAccountIds, merge.addedProjectIdsByAccount);
+      }
+    };
+    reader.onerror = () => {
+      setImportDialog({ type: 'error', message: 'No se pudo leer el archivo.' });
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  function applyImport(finalAccounts, addedAccountIds = [], addedProjectIdsByAccount = {}) {
+    setAccounts(finalAccounts);
+    setImportDialog(null);
+    showToast('Cuentas importadas', () => {
+      setAccounts(prev =>
+        prev
+          .filter(a => !addedAccountIds.includes(a.id))
+          .map(a => {
+            const toRemove = addedProjectIdsByAccount[a.id];
+            if (!toRemove || toRemove.length === 0) return a;
+            return { ...a, projects: a.projects.filter(p => !toRemove.includes(p.id)) };
+          })
+      );
+    });
+  }
+
+  const searched = accounts.filter(a => {
+    if (!search.trim()) return true;
+    const q = normalizeText(search);
+    return normalizeText(a.email).includes(q) || a.projects.some(p => normalizeText(p.name).includes(q));
+  });
+  const planFilteredAccounts = planFilter === 'all' ? searched : searched.filter(a => a.plan === planFilter);
+  const filtered = sortAccounts(planFilteredAccounts, accountSortBy);
+
+  const totalProjects = accounts.reduce((sum, a) => sum + a.projects.length, 0);
+  const openAccount = accounts.find(a => a.id === openAccountId) || null;
+
+  return (
+    <div
+      className="font-body paper-texture min-h-screen bg-slate-900 text-slate-200"
+      style={{ colorScheme: 'dark' }}
+      onClick={() => accountMenu && closeAccountMenu()}
+    >
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {openAccount ? (
+          <AccountDetail
+            account={openAccount}
+            onBack={() => setOpenAccountId(null)}
+            accountMenu={accountMenu}
+            onToggleMenu={() => toggleAccountMenu(openAccount.id)}
+            onEdit={() => startEditAccount(openAccount)}
+            onDeleteRequest={() => requestDeleteAccount(openAccount.id)}
+            onConfirmDelete={() => confirmDeleteAccountNow(openAccount.id)}
+            onToggleFavorite={() => toggleFavorite(openAccount.id)}
+            onAddProject={() => setProjectModal({ accountId: openAccount.id, mode: 'new', data: emptyProject() })}
+            onEditProject={p => setProjectModal({ accountId: openAccount.id, mode: 'edit', data: p })}
+            onDeleteProject={pid => openConfirmProject(openAccount.id, pid)}
+            confirmDeleteProject={confirmDeleteProject}
+            onConfirmDeleteProject={pid => deleteProject(openAccount.id, pid)}
+            onCancelConfirmProject={() => setConfirmDeleteProject(null)}
+          />
+        ) : (
+          <>
+            <div className="mb-8">
+              <p className="font-label text-xs tracking-widest text-teal-400 uppercase mb-1">Directorio personal</p>
+              <h1 className="font-display text-3xl sm:text-4xl text-slate-100">
+                Mis cuentas de <span className="italic">Claude</span>
+              </h1>
+              <p className="text-sm text-slate-400 mt-2">Correos y proyectos en un solo lugar.</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Se guarda automáticamente en este navegador. Para llevarlo a otra compu o navegador, usá Exportar / Importar JSON.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                {accounts.length > 0 && (
+                  <p className="font-label text-xs text-slate-500 tracking-wide">
+                    {accounts.length} {accounts.length === 1 ? 'CUENTA' : 'CUENTAS'} · {totalProjects}{' '}
+                    {totalProjects === 1 ? 'PROYECTO' : 'PROYECTOS'}
+                  </p>
+                )}
+                {accounts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      exportAccounts(accounts);
+                      setHasUnsavedChanges(false);
+                    }}
+                    className="flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
+                  >
+                    <Icon name="download" className="w-3 h-3" />
+                    EXPORTAR JSON
+                  </button>
+                )}
+                {accounts.length > 0 && hasUnsavedChanges && (
+                  <span className="font-label text-xs text-amber-400 tracking-wide">· cambios sin exportar</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                  className="flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
+                >
+                  <Icon name="upload" className="w-3 h-3" />
+                  IMPORTAR JSON
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportFile}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <div className="flex-1">
+                <SearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Buscar por correo o proyecto..."
+                  ariaLabel="Buscar por correo o proyecto"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setAccountModal({ mode: 'new', data: emptyAccount() })}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400"
+              >
+                <Icon name="plus" className="w-4 h-4" />
+                Nueva cuenta
+              </button>
+            </div>
+
+            {accounts.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <select
+                  value={planFilter}
+                  onChange={e => setPlanFilter(e.target.value)}
+                  aria-label="Filtrar por plan"
+                  className="px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                >
+                  <option value="all">Todos los planes</option>
+                  {PLAN_OPTIONS.map(p => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={accountSortBy}
+                  onChange={e => setAccountSortBy(e.target.value)}
+                  aria-label="Ordenar cuentas"
+                  className="px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                >
+                  <option value="default">Orden: predeterminado</option>
+                  <option value="email">Orden: correo (A-Z)</option>
+                  <option value="projects">Orden: cantidad de proyectos</option>
+                </select>
+              </div>
+            )}
+
+            {accounts.length === 0 ? (
+              <EmptyState onAdd={() => setAccountModal({ mode: 'new', data: emptyAccount() })} />
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16 text-slate-500 text-sm">
+                {search.trim() ? `Sin resultados para "${search}"` : 'No hay cuentas con ese plan.'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map(acc => (
+                  <AccountCard
+                    key={acc.id}
+                    account={acc}
+                    onOpen={() => {
+                      setOpenAccountId(acc.id);
+                      closeAccountMenu();
+                    }}
+                    accountMenu={accountMenu}
+                    onToggleMenu={() => toggleAccountMenu(acc.id)}
+                    onEdit={() => startEditAccount(acc)}
+                    onDeleteRequest={() => requestDeleteAccount(acc.id)}
+                    onConfirmDelete={() => confirmDeleteAccountNow(acc.id)}
+                    onToggleFavorite={() => toggleFavorite(acc.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {accountModal && (
+        <AccountModal
+          mode={accountModal.mode}
+          initial={accountModal.data}
+          accounts={accounts}
+          onCancel={() => setAccountModal(null)}
+          onSave={saveAccount}
+        />
+      )}
+
+      {projectModal && (
+        <ProjectModal
+          mode={projectModal.mode}
+          initial={projectModal.data}
+          existingProjects={(accounts.find(a => a.id === projectModal.accountId) || { projects: [] }).projects}
+          onCancel={() => setProjectModal(null)}
+          onSave={form => saveProject(projectModal.accountId, form)}
+        />
+      )}
+
+      {importDialog && (
+        <ModalShell
+          title={importDialog.type === 'error' ? 'No se pudo importar' : 'Importar cuentas'}
+          onCancel={() => setImportDialog(null)}
+        >
+          <div className="flex flex-col gap-4">
+            {importDialog.type === 'error' ? (
+              <>
+                <p className="text-sm text-slate-300">{importDialog.message}</p>
+                <div className="flex justify-end gap-2 mt-1">
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={() => setImportDialog(null)}
+                    className="px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+                  >
+                    Entendido
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col gap-2">
+                  {importDialog.merge.newCount > 0 && (
+                    <p className="text-sm text-slate-300">
+                      Se agregarán {importDialog.merge.newCount}{' '}
+                      {importDialog.merge.newCount === 1 ? 'cuenta nueva' : 'cuentas nuevas'}.
+                    </p>
+                  )}
+                  {importDialog.merge.mergedCount > 0 && (
+                    <p className="text-sm text-slate-300">
+                      Se combinarán los proyectos de {importDialog.merge.mergedCount}{' '}
+                      {importDialog.merge.mergedCount === 1 ? 'cuenta existente' : 'cuentas existentes'} con las del
+                      archivo, sin borrar lo que ya tenías.
+                    </p>
+                  )}
+                  {importDialog.merge.skippedProjectsCount > 0 && (
+                    <p className="text-sm text-slate-300">
+                      {importDialog.merge.skippedProjectsCount}{' '}
+                      {importDialog.merge.skippedProjectsCount === 1
+                        ? 'proyecto ya estaba importado, se omitió.'
+                        : 'proyectos ya estaban importados, se omitieron.'}
+                    </p>
+                  )}
+                  {importDialog.merge.renamedProjectsCount > 0 && (
+                    <p className="text-sm text-slate-300">
+                      {importDialog.merge.renamedProjectsCount}{' '}
+                      {importDialog.merge.renamedProjectsCount === 1
+                        ? 'proyecto se renombró'
+                        : 'proyectos se renombraron'}{' '}
+                      por coincidir en nombre con uno existente.
+                    </p>
+                  )}
+                  {importDialog.duplicatesRemoved > 0 && (
+                    <p className="text-sm text-slate-300">
+                      Se encontraron {importDialog.duplicatesRemoved}{' '}
+                      {importDialog.duplicatesRemoved === 1 ? 'correo repetido' : 'correos repetidos'} dentro del
+                      archivo; se conservó solo la primera aparición de cada uno.
+                    </p>
+                  )}
+                  <p className="text-sm text-slate-300">Esta acción se puede deshacer.</p>
+                </div>
+                <div className="flex justify-end gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setImportDialog(null)}
+                    className="px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={() =>
+                      applyImport(
+                        importDialog.merge.accounts,
+                        importDialog.merge.addedAccountIds,
+                        importDialog.merge.addedProjectIdsByAccount
+                      )
+                    }
+                    className="px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+                  >
+                    Importar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </ModalShell>
+      )}
+
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
+          {toasts.map(t => (
+            <div
+              key={t.id}
+              className="flex items-center gap-3 bg-slate-700 border border-slate-600 rounded-md shadow-xl px-4 py-2.5"
+            >
+              <p className="text-sm text-slate-200">{t.message}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  t.undo();
+                  setToasts(prev => prev.filter(x => x.id !== t.id));
+                }}
+                className="text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors"
+              >
+                Deshacer
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SearchInput({ value, onChange, placeholder, ariaLabel }) {
+  return (
+    <div className="relative">
+      <Icon name="search" className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        className="w-full pl-9 pr-9 py-2.5 rounded-md border border-slate-700 bg-slate-800 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          aria-label="Limpiar búsqueda"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-500 hover:text-slate-200 transition-colors"
+        >
+          <Icon name="x" className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EmptyState({ onAdd }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-4 text-center border border-dashed border-slate-700 rounded-lg bg-slate-800">
+      <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+        <Icon name="inbox" className="w-5 h-5 text-slate-500" />
+      </div>
+      <h3 className="text-sm font-medium text-slate-200 mb-1">Todavía no tienes cuentas guardadas</h3>
+      <p className="text-sm text-slate-500 mb-5 max-w-xs">
+        Agrega tu primer correo y los proyectos que tienes en esa cuenta.
+      </p>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors"
+      >
+        <Icon name="plus" className="w-4 h-4" />
+        Agregar primera cuenta
+      </button>
+    </div>
+  );
+}
+
+function AccountMenu({ isOpen, mode, onToggle, onEdit, onDeleteRequest, onConfirmDelete }) {
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        title="Editar cuenta"
+        aria-label="Editar cuenta"
+        className="p-1.5 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+      >
+        <Icon name="pencil" className="w-3.5 h-3.5" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-36 bg-slate-700 border border-slate-600 rounded-md shadow-xl overflow-hidden">
+          {mode === 'confirm' ? (
+            <div className="p-2.5 text-center">
+              <p className="text-xs text-slate-300 mb-2">¿Eliminar cuenta?</p>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={onConfirmDelete}
+                  className="flex-1 text-xs font-medium text-white bg-red-700 hover:bg-red-600 rounded py-1 transition-colors"
+                >
+                  Sí
+                </button>
+                <button
+                  type="button"
+                  onClick={onToggle}
+                  className="flex-1 text-xs font-medium text-slate-300 hover:bg-slate-600 rounded py-1 transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onEdit}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:bg-slate-600 transition-colors"
+              >
+                <Icon name="pencil" className="w-3 h-3" /> Editar
+              </button>
+              <button
+                type="button"
+                onClick={onDeleteRequest}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-900 transition-colors"
+              >
+                <Icon name="trash2" className="w-3 h-3" /> Eliminar
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AccountCard({
+  account,
+  onOpen,
+  accountMenu,
+  onToggleMenu,
+  onEdit,
+  onDeleteRequest,
+  onConfirmDelete,
+  onToggleFavorite,
+}) {
+  const isMenuOpen = accountMenu && accountMenu.accountId === account.id;
+  const menuMode = isMenuOpen ? accountMenu.mode : 'options';
+  const count = account.projects.length;
+  const breakdown = statusBreakdown(account.projects);
+
+  return (
+    <div
+      onClick={onOpen}
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver cuenta ${account.email || 'sin correo'}`}
+      className="bg-slate-800 border border-slate-700 rounded-lg p-4 flex flex-col gap-3 hover:border-slate-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-label text-xs tracking-wide text-slate-500 uppercase mb-1">Cuenta</p>
+          <p className="text-sm font-semibold text-slate-100 truncate" title={account.email}>
+            {account.email || 'Sin correo'}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+          <span className="font-label -rotate-2 inline-block px-2 py-0.5 text-xs font-semibold uppercase tracking-wide border border-indigo-700 text-indigo-300 bg-indigo-900 rounded-sm">
+            {account.plan}
+          </span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              title={account.favorite ? 'Quitar de favoritos' : 'Marcar como favorita'}
+              aria-label={account.favorite ? 'Quitar de favoritos' : 'Marcar como favorita'}
+              className={`p-1.5 rounded hover:bg-slate-700 transition-colors ${
+                account.favorite ? 'text-amber-400 hover:text-amber-300' : 'text-slate-500 hover:text-slate-200'
+              }`}
+            >
+              <Icon name="star" className="w-3.5 h-3.5" fill={account.favorite ? 'currentColor' : 'none'} />
+            </button>
+            <AccountMenu
+              isOpen={isMenuOpen}
+              mode={menuMode}
+              onToggle={onToggleMenu}
+              onEdit={onEdit}
+              onDeleteRequest={onDeleteRequest}
+              onConfirmDelete={onConfirmDelete}
+            />
+          </div>
+        </div>
+      </div>
+      {account.notes && <p className="text-xs text-slate-500 truncate">{account.notes}</p>}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-3">
+          <p className="font-label text-xs text-slate-500 tracking-wide">
+            {count} {count === 1 ? 'PROYECTO' : 'PROYECTOS'}
+          </p>
+          {count > 0 && (
+            <div className="flex items-center gap-2">
+              {Object.keys(STATUS_META).map(key => {
+                const n = breakdown[key];
+                if (!n) return null;
+                return (
+                  <span key={key} className="flex items-center gap-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[key]}`} />
+                    <span className="font-label text-xs text-slate-500">{n}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <Icon name="chevronRight" className="w-4 h-4 text-slate-600" />
+      </div>
+    </div>
+  );
+}
+
+function AccountDetail({
+  account,
+  onBack,
+  accountMenu,
+  onToggleMenu,
+  onEdit,
+  onDeleteRequest,
+  onConfirmDelete,
+  onToggleFavorite,
+  onAddProject,
+  onEditProject,
+  onDeleteProject,
+  confirmDeleteProject,
+  onConfirmDeleteProject,
+  onCancelConfirmProject,
+}) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('default');
+  const [projectSearch, setProjectSearch] = useState('');
+
+  const isMenuOpen = accountMenu && accountMenu.accountId === account.id;
+  const menuMode = isMenuOpen ? accountMenu.mode : 'options';
+  const count = account.projects.length;
+
+  const searchFilteredProjects = account.projects.filter(p => {
+    if (!projectSearch.trim()) return true;
+    return normalizeText(p.name).includes(normalizeText(projectSearch));
+  });
+  const breakdown = statusBreakdown(searchFilteredProjects);
+
+  const filteredProjects =
+    statusFilter === 'all'
+      ? searchFilteredProjects
+      : searchFilteredProjects.filter(p => normalizeStatus(p.status) === statusFilter);
+  const visibleProjects = sortProjects(filteredProjects, sortBy);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors mb-6"
+      >
+        <Icon name="arrowLeft" className="w-4 h-4" />
+        Volver
+      </button>
+
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <div className="min-w-0 flex-1">
+          <p className="font-label text-xs tracking-wide text-slate-500 uppercase mb-1">Cuenta</p>
+          <h2 className="font-display text-2xl sm:text-3xl text-slate-100 truncate">{account.email || 'Sin correo'}</h2>
+        </div>
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <span className="font-label -rotate-2 inline-block px-2 py-0.5 text-xs font-semibold uppercase tracking-wide border border-indigo-700 text-indigo-300 bg-indigo-900 rounded-sm">
+            {account.plan}
+          </span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              title={account.favorite ? 'Quitar de favoritos' : 'Marcar como favorita'}
+              aria-label={account.favorite ? 'Quitar de favoritos' : 'Marcar como favorita'}
+              className={`p-1.5 rounded hover:bg-slate-700 transition-colors ${
+                account.favorite ? 'text-amber-400 hover:text-amber-300' : 'text-slate-500 hover:text-slate-200'
+              }`}
+            >
+              <Icon name="star" className="w-3.5 h-3.5" fill={account.favorite ? 'currentColor' : 'none'} />
+            </button>
+            <AccountMenu
+              isOpen={isMenuOpen}
+              mode={menuMode}
+              onToggle={onToggleMenu}
+              onEdit={onEdit}
+              onDeleteRequest={onDeleteRequest}
+              onConfirmDelete={onConfirmDelete}
+            />
+          </div>
+        </div>
+      </div>
+
+      {account.notes && <p className="text-sm text-slate-400 mt-2">{account.notes}</p>}
+
+      <p className="font-label text-xs text-slate-500 tracking-wide mt-3 mb-6">
+        {count} {count === 1 ? 'PROYECTO' : 'PROYECTOS'}
+      </p>
+
+      <button
+        type="button"
+        onClick={onAddProject}
+        className="flex items-center gap-1.5 px-4 py-2.5 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors mb-6"
+      >
+        <Icon name="plus" className="w-4 h-4" />
+        Agregar proyecto
+      </button>
+
+      {account.projects.length > 0 && (
+        <div className="flex flex-col gap-3 mb-4">
+          <SearchInput
+            value={projectSearch}
+            onChange={setProjectSearch}
+            placeholder="Buscar proyecto por nombre..."
+            ariaLabel="Buscar proyecto por nombre"
+          />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-wrap gap-1.5">
+              {STATUS_FILTERS.map(f => {
+                const filterCount = f.value === 'all' ? searchFilteredProjects.length : breakdown[f.value] || 0;
+                return (
+                  <button
+                    type="button"
+                    key={f.value}
+                    onClick={() => setStatusFilter(f.value)}
+                    className={`font-label px-2.5 py-1 text-xs font-medium uppercase tracking-wide rounded-full border transition-colors ${
+                      statusFilter === f.value
+                        ? 'bg-teal-900 text-teal-300 border-teal-700'
+                        : 'border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                    }`}
+                  >
+                    {f.label} ({filterCount})
+                  </button>
+                );
+              })}
+            </div>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              aria-label="Ordenar proyectos"
+              className="px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            >
+              <option value="default">Orden: predeterminado</option>
+              <option value="name">Orden: nombre (A-Z)</option>
+              <option value="status">Orden: estado</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {account.projects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-slate-700 rounded-lg bg-slate-800">
+          <p className="text-sm text-slate-500">Aún no tienes proyectos en esta cuenta.</p>
+        </div>
+      ) : visibleProjects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center border border-dashed border-slate-700 rounded-lg bg-slate-800">
+          <p className="text-sm text-slate-500">
+            {projectSearch.trim() ? `Sin resultados para "${projectSearch}"` : 'No hay proyectos con ese estado.'}
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {visibleProjects.map(p => (
+            <ProjectCard
+              key={p.id}
+              project={p}
+              isConfirming={
+                confirmDeleteProject &&
+                confirmDeleteProject.accountId === account.id &&
+                confirmDeleteProject.projectId === p.id
+              }
+              onEdit={() => onEditProject(p)}
+              onDelete={() => onDeleteProject(p.id)}
+              onConfirmDelete={() => onConfirmDeleteProject(p.id)}
+              onCancelConfirm={onCancelConfirmProject}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectCard({ project, isConfirming, onEdit, onDelete, onConfirmDelete, onCancelConfirm }) {
+  const meta = STATUS_META[normalizeStatus(project.status)];
+  return (
+    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 flex items-start justify-between gap-3 hover:border-slate-600 transition-colors">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap mb-1">
+          <span className="text-sm text-slate-100 font-semibold truncate">{project.name || 'Sin nombre'}</span>
+          <span
+            className={`font-label rotate-1 inline-block px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide border rounded-sm ${meta.badge}`}
+          >
+            {meta.label}
+          </span>
+        </div>
+        {project.notes && <p className="text-xs text-slate-500 mt-1">{project.notes}</p>}
+        {project.createdAt && (
+          <p className="font-label text-xs text-slate-600 mt-1.5">Creado el {formatDate(project.createdAt)}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-0.5 shrink-0">
+        {isConfirming ? (
+          <>
+            <button type="button" onClick={onConfirmDelete} className="text-xs font-medium text-red-400 hover:text-red-300 px-1">
+              Sí
+            </button>
+            <button type="button" onClick={onCancelConfirm} className="text-xs font-medium text-slate-500 hover:text-slate-300 px-1">
+              No
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              title="Editar proyecto"
+              aria-label="Editar proyecto"
+              onClick={onEdit}
+              className="p-1.5 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition-colors"
+            >
+              <Icon name="pencil" className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Eliminar proyecto"
+              aria-label="Eliminar proyecto"
+              onClick={onDelete}
+              className="p-1.5 rounded text-slate-500 hover:text-red-400 hover:bg-red-900 transition-colors"
+            >
+              <Icon name="trash2" className="w-3.5 h-3.5" />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ModalShell({ title, onCancel, children }) {
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    const node = contentRef.current;
+    if (!node) return;
+
+    function getFocusable() {
+      return Array.from(
+        node.querySelectorAll('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])')
+      ).filter(el => !el.disabled && el.offsetParent !== null);
+    }
+
+    function handleTab(e) {
+      if (e.key !== 'Tab') return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    node.addEventListener('keydown', handleTab);
+    return () => node.removeEventListener('keydown', handleTab);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={e => e.stopPropagation()}>
+      <div className="absolute inset-0 bg-black opacity-70" onClick={onCancel} />
+      <div
+        ref={contentRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="account-directory-modal-title"
+        className="relative bg-slate-800 border border-slate-700 rounded-lg w-full max-w-sm p-5"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 id="account-directory-modal-title" className="font-label text-xs tracking-wide text-slate-500 uppercase">
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Cerrar"
+            className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-700"
+          >
+            <Icon name="x" className="w-4 h-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AccountModal({ mode, initial, accounts, onCancel, onSave }) {
+  const [email, setEmail] = useState(initial.email);
+  const [plan, setPlan] = useState(initial.plan);
+  const [notes, setNotes] = useState(initial.notes || '');
+  const [emailError, setEmailError] = useState('');
+
+  function handleSubmit() {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setEmailError('Ingresá un correo para guardar la cuenta.');
+      return;
+    }
+    if (!EMAIL_REGEX.test(trimmed)) {
+      setEmailError('Ingresá un correo con formato válido (ej: nombre@dominio.com).');
+      return;
+    }
+    if (isDuplicateEmail(accounts, trimmed, initial.id)) {
+      setEmailError('Ya existe una cuenta con ese correo.');
+      return;
+    }
+    onSave({ ...initial, email: trimmed, plan, notes: notes.trim() });
+  }
+
+  return (
+    <ModalShell title={mode === 'new' ? 'Nueva cuenta' : 'Editar cuenta'} onCancel={onCancel}>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Correo</label>
+          <input
+            type="email"
+            autoFocus
+            value={email}
+            onChange={e => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError('');
+            }}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            placeholder="nombre@correo.com"
+            aria-invalid={!!emailError}
+            className={`w-full px-3 py-2 rounded-md border bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 ${
+              emailError
+                ? 'border-red-600 focus:ring-red-500 focus:border-red-500'
+                : 'border-slate-600 focus:ring-teal-500 focus:border-teal-500'
+            }`}
+          />
+          {emailError && <p className="text-xs text-red-400 mt-1">{emailError}</p>}
+        </div>
+        <div>
+          <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Plan</label>
+          <select
+            value={plan}
+            onChange={e => setPlan(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          >
+            {PLAN_OPTIONS.map(p => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Notas (opcional)</label>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Para qué usás esta cuenta, cuándo revisarla..."
+            rows={2}
+            className="w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+        </div>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+function ProjectModal({ mode, initial, existingProjects, onCancel, onSave }) {
+  const [name, setName] = useState(initial.name);
+  const [status, setStatus] = useState(normalizeStatus(initial.status));
+  const [notes, setNotes] = useState(initial.notes);
+  const [nameError, setNameError] = useState(false);
+  const [duplicateCheck, setDuplicateCheck] = useState(null);
+  const nameInputRef = useRef(null);
+
+  const isConfirmPhase = duplicateCheck && duplicateCheck.phase === 'confirm';
+  const suggestedName = isConfirmPhase ? nextAvailableName(existingProjects, name.trim(), initial.id) : null;
+
+  function handleSubmit() {
+    if (!name.trim()) {
+      setNameError(true);
+      return;
+    }
+    const trimmedName = name.trim();
+    const existing = findDuplicateProject(existingProjects, trimmedName, initial.id);
+    if (existing) {
+      setDuplicateCheck({ phase: 'preview', existing });
+      return;
+    }
+    onSave({ ...initial, name: trimmedName, status, notes: notes.trim() });
+  }
+
+  function confirmDuplicateName() {
+    onSave({ ...initial, name: suggestedName, status, notes: notes.trim() });
+  }
+
+  function changeNameInstead() {
+    setDuplicateCheck(null);
+    if (nameInputRef.current) nameInputRef.current.focus();
+  }
+
+  if (duplicateCheck && duplicateCheck.phase === 'preview') {
+    const existing = duplicateCheck.existing;
+    const existingMeta = STATUS_META[normalizeStatus(existing.status)];
+    return (
+      <ModalShell title="Nombre ya utilizado" onCancel={onCancel}>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-slate-300">
+            Ya existe un proyecto llamado <span className="font-semibold text-slate-100">"{existing.name}"</span> en
+            esta cuenta:
+          </p>
+          <div className="bg-slate-700 border border-slate-600 rounded-lg p-3">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="text-sm text-slate-100 font-semibold">{existing.name}</span>
+              <span
+                className={`font-label rotate-1 inline-block px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide border rounded-sm ${existingMeta.badge}`}
+              >
+                {existingMeta.label}
+              </span>
+            </div>
+            {existing.notes && <p className="text-xs text-slate-400 mt-1">{existing.notes}</p>}
+            {existing.createdAt && (
+              <p className="font-label text-xs text-slate-500 mt-1.5">Creado el {formatDate(existing.createdAt)}</p>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-1">
+            <button
+              type="button"
+              onClick={changeNameInstead}
+              className="px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
+            >
+              Cambiar nombre
+            </button>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setDuplicateCheck({ phase: 'confirm', existing })}
+              className="px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      </ModalShell>
+    );
+  }
+
+  return (
+    <ModalShell title={mode === 'new' ? 'Nuevo proyecto' : 'Editar proyecto'} onCancel={onCancel}>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">
+            Nombre del proyecto
+          </label>
+          <input
+            ref={nameInputRef}
+            autoFocus={!isConfirmPhase}
+            value={name}
+            onChange={e => {
+              setName(e.target.value);
+              if (nameError) setNameError(false);
+              if (duplicateCheck) setDuplicateCheck(null);
+            }}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            placeholder="Ej: Landing page cliente X"
+            aria-invalid={nameError}
+            className={`w-full px-3 py-2 rounded-md border bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 ${
+              nameError
+                ? 'border-red-600 focus:ring-red-500 focus:border-red-500'
+                : 'border-slate-600 focus:ring-teal-500 focus:border-teal-500'
+            }`}
+          />
+          {nameError && <p className="text-xs text-red-400 mt-1">Ingresá un nombre para guardar el proyecto.</p>}
+        </div>
+        <div>
+          <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Estado</label>
+          <div className="flex gap-2">
+            {Object.entries(STATUS_META).map(([value, meta]) => (
+              <button
+                type="button"
+                key={value}
+                onClick={() => setStatus(value)}
+                className={`flex-1 py-2 rounded-md border text-xs font-medium font-label uppercase tracking-wide transition-colors ${
+                  status === value ? meta.badge : 'border-slate-600 text-slate-500 hover:border-slate-500'
+                }`}
+              >
+                {meta.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Notas (opcional)</label>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Contexto, próximos pasos, lo que sea útil..."
+            rows={3}
+            className="w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+        </div>
+
+        {isConfirmPhase && (
+          <div role="status" className="bg-amber-900 border border-amber-700 rounded-md p-3">
+            <p className="text-xs text-amber-200 mb-2">
+              Ya existe un proyecto llamado "{name.trim()}". ¿Querés crearlo igual? Se guardará como "{suggestedName}".
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                autoFocus
+                onClick={confirmDuplicateName}
+                className="flex-1 text-xs font-medium text-white bg-amber-700 hover:bg-amber-600 rounded py-1.5 transition-colors"
+              >
+                Sí, usar "{suggestedName}"
+              </button>
+              <button
+                type="button"
+                onClick={changeNameInstead}
+                className="flex-1 text-xs font-medium text-slate-300 hover:bg-slate-600 rounded py-1.5 transition-colors"
+              >
+                Cambiar nombre
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
+          >
+            Cancelar
+          </button>
+          {!isConfirmPhase && (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+            >
+              Guardar
+            </button>
+          )}
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<AccountsTracker />);
+</script>
+<script>
+  // Registra el service worker solo si la app se sirve por HTTPS o localhost.
+  // Si se abre el archivo directamente (file://), esto no hace nada (y no rompe nada).
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
