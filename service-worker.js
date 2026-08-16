@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mis-cuentas-claude-v2';
+const CACHE_NAME = 'mis-cuentas-claude-v3';
 
 const APP_SHELL = [
   './index.html',
@@ -8,6 +8,9 @@ const APP_SHELL = [
   './icons/icon-512-maskable.png',
   './icons/apple-touch-icon.png',
 ];
+
+// Estos dos cambian seguido durante el desarrollo activo: van con estrategia "red primero".
+const NETWORK_FIRST = ['./index.html', './manifest.json'];
 
 // Librerías externas (CDN) que la app necesita para funcionar.
 // Se cachean con no-cors porque son de otro origen (respuesta "opaca").
@@ -50,16 +53,36 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const url = event.request.url;
-  const isGitHubApiCall =
-    url.indexOf('api.github.com') !== -1 ||
-    url.indexOf('githubusercontent.com') !== -1;
-
+  const isGitHubApiCall = url.indexOf('api.github.com') !== -1 || url.indexOf('githubusercontent.com') !== -1;
   if (isGitHubApiCall) {
     // La sincronización con la nube nunca debe servirse desde el caché.
     event.respondWith(fetch(event.request));
     return;
   }
 
+  const isNavigation = event.request.mode === 'navigate';
+  const isOwnAppShell =
+    isNavigation ||
+    (url.startsWith(self.location.origin) && NETWORK_FIRST.some(shellUrl => url.endsWith(shellUrl.replace('./', ''))));
+
+  if (isOwnAppShell) {
+    // Red primero: si estamos online, siempre mostramos la última versión publicada.
+    // Si falla la red (offline), servimos la última copia guardada en caché.
+    event.respondWith(
+      fetch(event.request)
+        .then(resp => {
+          if (resp && resp.ok) {
+            const copy = resp.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
+          }
+          return resp;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Librerías externas (React, Tailwind, fuentes, etc.): caché primero, ya que casi nunca cambian.
   event.respondWith(
     caches.match(event.request).then(cached => {
       const network = fetch(event.request)

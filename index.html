@@ -143,12 +143,14 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const STATUS_META = {
   en_proceso: { label: 'En proceso', badge: 'bg-teal-900 text-teal-300 border-teal-700' },
   pausado: { label: 'Pausado', badge: 'bg-amber-900 text-amber-300 border-amber-700' },
+  abandonado: { label: 'Abandonado', badge: 'bg-red-900 text-red-300 border-red-700' },
   finalizado: { label: 'Finalizado', badge: 'bg-slate-700 text-slate-300 border-slate-500' },
 };
 
 const STATUS_DOT = {
   en_proceso: 'bg-teal-400',
   pausado: 'bg-amber-400',
+  abandonado: 'bg-red-400',
   finalizado: 'bg-slate-400',
 };
 
@@ -258,7 +260,7 @@ function normalizeStatus(status) {
 }
 
 function statusBreakdown(projects) {
-  const counts = { en_proceso: 0, pausado: 0, finalizado: 0 };
+  const counts = { en_proceso: 0, pausado: 0, abandonado: 0, finalizado: 0 };
   projects.forEach(p => {
     const key = normalizeStatus(p.status);
     counts[key] = (counts[key] || 0) + 1;
@@ -271,7 +273,7 @@ function sortProjects(projects, sortBy) {
     return [...projects].sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
   if (sortBy === 'status') {
-    const order = { en_proceso: 0, pausado: 1, finalizado: 2 };
+    const order = { en_proceso: 0, pausado: 1, abandonado: 2, finalizado: 3 };
     return [...projects].sort((a, b) => order[normalizeStatus(a.status)] - order[normalizeStatus(b.status)]);
   }
   return projects;
@@ -561,9 +563,10 @@ function AccountsTracker() {
     }
     clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
+      setCloudSync(prev => ({ ...prev, status: 'syncing', error: '' }));
       pushGist(cloudSync.token, cloudSync.gistId, accountsRef.current)
-        .then(() => setCloudSync(prev => ({ ...prev, lastSyncedAt: Date.now(), error: '' })))
-        .catch(err => setCloudSync(prev => ({ ...prev, error: friendlySyncError(err) })));
+        .then(() => setCloudSync(prev => ({ ...prev, status: 'idle', lastSyncedAt: Date.now(), error: '' })))
+        .catch(err => setCloudSync(prev => ({ ...prev, status: 'idle', error: friendlySyncError(err) })));
     }, 2500);
     return () => clearTimeout(syncTimerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1880,13 +1883,14 @@ function ProjectModal({ mode, initial, existingProjects, onCancel, onSave }) {
         </div>
         <div>
           <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Estado</label>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {Object.entries(STATUS_META).map(([value, meta]) => (
               <button
                 type="button"
                 key={value}
                 onClick={() => setStatus(value)}
-                className={`flex-1 py-2 rounded-md border text-xs font-medium font-label uppercase tracking-wide transition-colors ${
+                aria-pressed={status === value}
+                className={`py-2 rounded-md border text-xs font-medium font-label uppercase tracking-wide transition-colors ${
                   status === value ? meta.badge : 'border-slate-600 text-slate-500 hover:border-slate-500'
                 }`}
               >
