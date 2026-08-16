@@ -125,6 +125,12 @@ function Icon({ name, className, fill = 'none', ...rest }) {
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
         </svg>
       );
+    case 'cloud':
+      return (
+        <svg {...common}>
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -152,6 +158,98 @@ const STATUS_FILTERS = [
 ];
 
 const STORAGE_KEY = 'mis-cuentas-claude-data-v1';
+const GH_TOKEN_KEY = 'mis-cuentas-claude-gh-token';
+const GH_GIST_ID_KEY = 'mis-cuentas-claude-gh-gist-id';
+const GH_GIST_DESCRIPTION = 'Mis cuentas de Claude — datos (no editar a mano)';
+const GH_GIST_FILENAME = 'mis-cuentas-claude-data.json';
+
+async function ghRequest(token, path, options = {}) {
+  const res = await fetch(`https://api.github.com${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const err = new Error(`GitHub API error: ${res.status}`);
+    err.status = res.status;
+    try {
+      const body = await res.json();
+      err.detail = body && body.message;
+    } catch (e) {
+      // sin cuerpo JSON en la respuesta de error; se ignora
+    }
+    throw err;
+  }
+  return res.json();
+}
+
+async function findExistingGist(token) {
+  const gists = await ghRequest(token, '/gists?per_page=100');
+  if (!Array.isArray(gists)) return null;
+  const match = gists.find(g => g.description === GH_GIST_DESCRIPTION && g.files && g.files[GH_GIST_FILENAME]);
+  return match ? match.id : null;
+}
+
+async function createGist(token, accounts) {
+  const gist = await ghRequest(token, '/gists', {
+    method: 'POST',
+    body: JSON.stringify({
+      description: GH_GIST_DESCRIPTION,
+      public: false,
+      files: { [GH_GIST_FILENAME]: { content: JSON.stringify(accounts, null, 2) } },
+    }),
+  });
+  return gist.id;
+}
+
+async function pullGist(token, gistId) {
+  const gist = await ghRequest(token, `/gists/${gistId}`);
+  const file = gist.files && gist.files[GH_GIST_FILENAME];
+  if (!file) throw new Error('El gist no contiene el archivo esperado.');
+  let content = file.content;
+  if (file.truncated && file.raw_url) {
+    const res = await fetch(file.raw_url);
+    content = await res.text();
+  }
+  const parsed = JSON.parse(content || '[]');
+  return normalizeImportedAccounts(parsed);
+}
+
+async function pushGist(token, gistId, accounts) {
+  await ghRequest(token, `/gists/${gistId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      files: { [GH_GIST_FILENAME]: { content: JSON.stringify(accounts, null, 2) } },
+    }),
+  });
+}
+
+function friendlySyncError(err) {
+  if (!err) return 'Ocurrió un error al sincronizar.';
+  if (err.status === 401) return 'El token no es válido o fue revocado.';
+  if (err.status === 403) return 'GitHub rechazó la solicitud (límite de uso o permisos insuficientes).';
+  if (err.status === 404) return 'No se encontró el gist. Puede haber sido borrado.';
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return 'Sin conexión a internet. Se reintentará más tarde.';
+  }
+  return err.message || 'Ocurrió un error al sincronizar.';
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Math.max(0, Date.now() - ts);
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'hace un momento';
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  return `hace ${d} d`;
+}
 
 function normalizeStatus(status) {
   if (status === 'terminado') return 'finalizado';
@@ -371,6 +469,16 @@ function AccountsTracker() {
   const [toasts, setToasts] = useState([]);
   const [importDialog, setImportDialog] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [cloudSync, setCloudSync] = useState(() => {
+    const token = localStorage.getItem(GH_TOKEN_KEY) || '';
+    const gistId = localStorage.getItem(GH_GIST_ID_KEY) || '';
+    return { token, gistId, connected: !!(token && gistId), status: 'idle', lastSyncedAt: null, error: '' };
+  });
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
+
+  const syncTimerRef = useRef(null);
+  const isApplyingRemoteRef = useRef(false);
+  const isFirstSyncPush = useRef(true);
 
   const confirmTimeout = useRef(null);
   const menuTimeout = useRef(null);
@@ -431,6 +539,87 @@ function AccountsTracker() {
       // localStorage lleno o no disponible; no interrumpimos la app por esto
     }
   }, [accounts]);
+
+  // Sincronización inicial silenciosa si ya había una conexión guardada en este dispositivo
+  useEffect(() => {
+    if (cloudSync.connected) {
+      syncNow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-push a la nube cuando cambian las cuentas localmente (con debounce)
+  useEffect(() => {
+    if (isFirstSyncPush.current) {
+      isFirstSyncPush.current = false;
+      return;
+    }
+    if (!cloudSync.connected) return;
+    if (isApplyingRemoteRef.current) {
+      isApplyingRemoteRef.current = false;
+      return;
+    }
+    clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      pushGist(cloudSync.token, cloudSync.gistId, accountsRef.current)
+        .then(() => setCloudSync(prev => ({ ...prev, lastSyncedAt: Date.now(), error: '' })))
+        .catch(err => setCloudSync(prev => ({ ...prev, error: friendlySyncError(err) })));
+    }, 2500);
+    return () => clearTimeout(syncTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts]);
+
+  async function connectToCloud(token) {
+    setCloudSync(prev => ({ ...prev, status: 'connecting', error: '' }));
+    try {
+      let gistId = await findExistingGist(token);
+      let mergedAccounts = accountsRef.current;
+      if (gistId) {
+        const remoteAccounts = await pullGist(token, gistId);
+        mergedAccounts = mergeImportedAccounts(accountsRef.current, remoteAccounts).accounts;
+        await pushGist(token, gistId, mergedAccounts);
+      } else {
+        gistId = await createGist(token, accountsRef.current);
+      }
+
+      localStorage.setItem(GH_TOKEN_KEY, token);
+      localStorage.setItem(GH_GIST_ID_KEY, gistId);
+
+      isApplyingRemoteRef.current = true;
+      setAccounts(mergedAccounts);
+      setCloudSync({ token, gistId, connected: true, status: 'idle', lastSyncedAt: Date.now(), error: '' });
+      showToast('Sincronización activada');
+    } catch (err) {
+      setCloudSync(prev => ({ ...prev, status: 'idle', error: friendlySyncError(err) }));
+    }
+  }
+
+  async function syncNow() {
+    if (!cloudSync.token || !cloudSync.gistId) return;
+    setCloudSync(prev => ({ ...prev, status: 'syncing', error: '' }));
+    await runSyncCycle(cloudSync.token, cloudSync.gistId);
+  }
+
+  async function runSyncCycle(token, gistId) {
+    try {
+      const remoteAccounts = await pullGist(token, gistId);
+      const merged = mergeImportedAccounts(accountsRef.current, remoteAccounts).accounts;
+      await pushGist(token, gistId, merged);
+      isApplyingRemoteRef.current = true;
+      setAccounts(merged);
+      setCloudSync(prev => ({ ...prev, status: 'idle', lastSyncedAt: Date.now(), error: '' }));
+    } catch (err) {
+      setCloudSync(prev => ({ ...prev, status: 'idle', error: friendlySyncError(err) }));
+    }
+  }
+
+  function disconnectCloud() {
+    localStorage.removeItem(GH_TOKEN_KEY);
+    localStorage.removeItem(GH_GIST_ID_KEY);
+    clearTimeout(syncTimerRef.current);
+    setCloudSync({ token: '', gistId: '', connected: false, status: 'idle', lastSyncedAt: null, error: '' });
+    showToast('Sincronización desconectada en este dispositivo');
+  }
 
   function showToast(message, undo) {
     const id = uid();
@@ -646,6 +835,18 @@ function AccountsTracker() {
                 )}
                 <button
                   type="button"
+                  onClick={() => setSyncModalOpen(true)}
+                  className="flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
+                >
+                  <Icon name="cloud" className="w-3 h-3" fill={cloudSync.connected ? 'currentColor' : 'none'} />
+                  {cloudSync.connected
+                    ? cloudSync.status === 'syncing'
+                      ? 'SINCRONIZANDO...'
+                      : `NUBE: OK ${cloudSync.lastSyncedAt ? '· ' + timeAgo(cloudSync.lastSyncedAt) : ''}`
+                    : 'SINCRONIZAR EN LA NUBE'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => fileInputRef.current && fileInputRef.current.click()}
                   className="flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
                 >
@@ -756,6 +957,16 @@ function AccountsTracker() {
           existingProjects={(accounts.find(a => a.id === projectModal.accountId) || { projects: [] }).projects}
           onCancel={() => setProjectModal(null)}
           onSave={form => saveProject(projectModal.accountId, form)}
+        />
+      )}
+
+      {syncModalOpen && (
+        <SyncModal
+          cloudSync={cloudSync}
+          onConnect={token => connectToCloud(token)}
+          onSyncNow={syncNow}
+          onDisconnect={disconnectCloud}
+          onClose={() => setSyncModalOpen(false)}
         />
       )}
 
@@ -1355,6 +1566,116 @@ function ModalShell({ title, onCancel, children }) {
         {children}
       </div>
     </div>
+  );
+}
+
+function SyncModal({ cloudSync, onConnect, onSyncNow, onDisconnect, onClose }) {
+  const [tokenInput, setTokenInput] = useState('');
+  const isConnecting = cloudSync.status === 'connecting';
+  const isSyncing = cloudSync.status === 'syncing';
+
+  return (
+    <ModalShell title="Sincronización en la nube" onCancel={onClose}>
+      <div className="flex flex-col gap-4">
+        {!cloudSync.connected ? (
+          <>
+            <p className="text-sm text-slate-300">
+              Guardá tus cuentas en un Gist privado de GitHub para que coincidan entre tu notebook y tu celular. Los
+              datos viajan directo desde tu navegador a GitHub, sin pasar por ningún otro servidor.
+            </p>
+            <ol className="text-xs text-slate-400 list-decimal pl-4 flex flex-col gap-1.5">
+              <li>
+                Creá un token en{' '}
+                <a
+                  href="https://github.com/settings/tokens/new?scopes=gist&description=Mis+cuentas+de+Claude"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-400 hover:text-teal-300 underline"
+                >
+                  github.com/settings/tokens
+                </a>{' '}
+                con el permiso <span className="font-label text-slate-300">gist</span> únicamente.
+              </li>
+              <li>Copialo y pegalo acá abajo.</li>
+              <li>En tu otro dispositivo, repetí este paso con el mismo token: va a encontrar este mismo gist solo.</li>
+            </ol>
+            <div>
+              <label className="font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5">
+                Token de GitHub
+              </label>
+              <input
+                type="password"
+                autoFocus
+                value={tokenInput}
+                onChange={e => setTokenInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && tokenInput.trim() && onConnect(tokenInput.trim())}
+                placeholder="ghp_..."
+                className="w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+            {cloudSync.error && <p className="text-xs text-red-400">{cloudSync.error}</p>}
+            <div className="flex justify-end gap-2 mt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!tokenInput.trim() || isConnecting}
+                onClick={() => onConnect(tokenInput.trim())}
+                className="px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isConnecting ? 'Conectando...' : 'Conectar'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-teal-400" />
+              <p className="text-sm text-slate-200">Conectado a GitHub</p>
+            </div>
+            <p className="text-xs text-slate-500">
+              {cloudSync.lastSyncedAt
+                ? `Última sincronización: ${timeAgo(cloudSync.lastSyncedAt)}`
+                : 'Todavía no sincronizó en este dispositivo.'}
+            </p>
+            <a
+              href={`https://gist.github.com/${cloudSync.gistId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-teal-400 hover:text-teal-300 underline w-fit"
+            >
+              Ver el gist en GitHub
+            </a>
+            {cloudSync.error && <p className="text-xs text-red-400">{cloudSync.error}</p>}
+            <p className="text-xs text-slate-500">
+              En tu otro dispositivo, pegá el mismo token en esta misma pantalla para que ambos compartan datos.
+            </p>
+            <div className="flex justify-between gap-2 mt-1">
+              <button
+                type="button"
+                onClick={onDisconnect}
+                className="px-3.5 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 transition-colors"
+              >
+                Desconectar
+              </button>
+              <button
+                type="button"
+                disabled={isSyncing}
+                onClick={onSyncNow}
+                className="px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSyncing ? 'Sincronizando...' : 'Sincronizar ahora'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </ModalShell>
   );
 }
 

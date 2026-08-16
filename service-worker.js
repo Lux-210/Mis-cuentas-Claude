@@ -1,7 +1,6 @@
-const CACHE_NAME = 'mis-cuentas-claude-v1';
+const CACHE_NAME = 'mis-cuentas-claude-v2';
 
 const APP_SHELL = [
-  './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
@@ -49,6 +48,17 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  const url = event.request.url;
+  const isGitHubApiCall =
+    url.indexOf('api.github.com') !== -1 ||
+    url.indexOf('githubusercontent.com') !== -1;
+
+  if (isGitHubApiCall) {
+    // La sincronización con la nube nunca debe servirse desde el caché.
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then(cached => {
