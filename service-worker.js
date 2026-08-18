@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mis-cuentas-claude-v3';
+const CACHE_NAME = 'mis-cuentas-claude-v4';
 
 const APP_SHELL = [
   './index.html',
@@ -12,13 +12,10 @@ const APP_SHELL = [
 // Estos dos cambian seguido durante el desarrollo activo: van con estrategia "red primero".
 const NETWORK_FIRST = ['./index.html', './manifest.json'];
 
-// Librerías externas (CDN) que la app necesita para funcionar.
-// Se cachean con no-cors porque son de otro origen (respuesta "opaca").
+// Desde que React, ReactDOM y el CSS de Tailwind quedaron incrustados directamente en el HTML,
+// la única dependencia externa real que queda es la fuente tipográfica (opcional: si falla,
+// el CSS ya tiene familias de respaldo del sistema).
 const EXTERNAL_SHELL = [
-  'https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js',
-  'https://unpkg.com/@babel/standalone@7.24.7/babel.min.js',
-  'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap',
 ];
 
