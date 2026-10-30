@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mis-cuentas-claude-v4';
+const CACHE_NAME = 'mis-cuentas-claude-v5';
 
 const APP_SHELL = [
   './index.html',

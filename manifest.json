@@ -9,6 +9,7 @@
   "theme_color": "#0f172a",
   "orientation": "any",
   "lang": "es",
+  "display_override": ["window-controls-overlay", "standalone"],
   "icons": [
     {
       "src": "icons/icon-192.png",
