@@ -352,6 +352,23 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
   .hover\:bg-teal-500:hover { --tw-bg-opacity: 1; background-color: rgb(20 184 166/var(--tw-bg-opacity,1)); }
   .bg-white\/15 { background-color: rgb(255 255 255/0.15); }
   .hover\:bg-white\/25:hover { background-color: rgb(255 255 255/0.25); }
+
+  /* Agregadas para el botón de engranaje "Configuración" (estilo DualSense)
+     y el modal de Configuración/Sincronización: mismo motivo que arriba. */
+  .bg-slate-600 { --tw-bg-opacity: 1; background-color: rgb(71 85 105/var(--tw-bg-opacity,1)); }
+  .hover\:bg-slate-800:hover { --tw-bg-opacity: 1; background-color: rgb(30 41 59/var(--tw-bg-opacity,1)); }
+  .ring-2 {
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow,0 0 #0000);
+  }
+  .ring-slate-900 { --tw-ring-opacity: 1; --tw-ring-color: rgb(15 23 42/var(--tw-ring-opacity,1)); }
+  .-top-0\.5 { top: -.125rem; }
+  .-right-0\.5 { right: -.125rem; }
+  .ml-auto { margin-left: auto; }
+  .border-t { border-top-width: 1px; }
+  .pt-4 { padding-top: 1rem; }
+  .gap-5 { gap: 1.25rem; }
 </style>
 </head>
 <body>
@@ -926,10 +943,13 @@ function AccountsTracker() {
             error: "",
             remember: remember
         }
-    }), [C, k] = useState(!1), [j, A] = useState(""), [I, T] = useState("accounts"), [UA, setUA] = useState(!1), M = useRef(null), D = useRef(!1), O = useRef(!0), P = useRef(null), _ = useRef(null), z = useRef(null), L = useRef(!0), G = useRef(e), settingsBtnRef = useRef(null), CRef = useRef(!1);
+    }), [C, k] = useState(!1), [CS, kS] = useState(!1), [j, A] = useState(""), [I, T] = useState("accounts"), [UA, setUA] = useState(!1), M = useRef(null), D = useRef(!1), O = useRef(!0), P = useRef(null), _ = useRef(null), z = useRef(null), L = useRef(!0), G = useRef(e), settingsBtnRef = useRef(null), syncBtnRef = useRef(null), CRef = useRef(!1), CSRef = useRef(!1);
     useEffect(() => {
         CRef.current = C
     }, [C]);
+    useEffect(() => {
+        CSRef.current = CS
+    }, [CS]);
     useEffect(() => {
         const handleUpdateAvailable = () => setUA(!0);
         return window.addEventListener("mis-cuentas-claude-update-available", handleUpdateAvailable), () => window.removeEventListener("mis-cuentas-claude-update-available", handleUpdateAvailable)
@@ -940,13 +960,27 @@ function AccountsTracker() {
         window.history.pushState({
             modal: "config"
         }, "");
-        function handlePopState() {
+        function handlePopState(ev) {
+            if (ev.state && "config" === ev.state.modal) return;
             backButtonClosed = !0, k(!1)
         }
         return window.addEventListener("popstate", handlePopState), () => {
             window.removeEventListener("popstate", handlePopState), backButtonClosed || window.history.back()
         }
     }, [C]);
+    useEffect(() => {
+        if (!CS) return;
+        let backButtonClosed = !1;
+        window.history.pushState({
+            modal: "sync"
+        }, "");
+        function handlePopState() {
+            backButtonClosed = !0, kS(!1)
+        }
+        return window.addEventListener("popstate", handlePopState), () => {
+            window.removeEventListener("popstate", handlePopState), backButtonClosed || window.history.back()
+        }
+    }, [CS]);
     async function U() {
         w.token && w.gistId && (S(e => ({
             ...e,
@@ -1048,7 +1082,7 @@ function AccountsTracker() {
         }
     }, []), useEffect(() => {
         function e(e) {
-            "Escape" === e.key && (d(null), i(null), b(null), p(null), clearTimeout(P.current), v(null), CRef.current && settingsBtnRef.current && settingsBtnRef.current.focus(), k(!1))
+            "Escape" === e.key && (CSRef.current ? (kS(!1), syncBtnRef.current && syncBtnRef.current.focus()) : (d(null), i(null), b(null), p(null), clearTimeout(P.current), v(null), CRef.current && settingsBtnRef.current && settingsBtnRef.current.focus(), k(!1)))
         }
         return window.addEventListener("keydown", e), () => window.removeEventListener("keydown", e)
     }, []), useEffect(() => {
@@ -1209,6 +1243,10 @@ function AccountsTracker() {
         }(te.id, e, a)
     }) : React.createElement(React.Fragment, null, React.createElement("div", {
         className: "mb-8"
+    }, React.createElement("div", {
+        className: "flex items-start justify-between gap-3"
+    }, React.createElement("div", {
+        className: "min-w-0"
     }, React.createElement("p", {
         className: "font-label text-xs tracking-widest text-teal-400 uppercase mb-1"
     }, "Directorio personal"), React.createElement("h1", {
@@ -1219,49 +1257,26 @@ function AccountsTracker() {
         className: "text-sm text-slate-400 mt-2"
     }, "Correos y proyectos en un solo lugar."), React.createElement("p", {
         className: "text-xs text-slate-500 mt-1"
-    }, "Se guarda automáticamente en este navegador. Para llevarlo a otra compu o navegador, usá Exportar / Importar JSON."), React.createElement("div", {
-        className: "flex flex-wrap items-center gap-3 mt-2"
-    }, e.length > 0 && React.createElement("p", {
-        className: "font-label text-xs text-slate-500 tracking-wide"
-    }, e.length, " ", 1 === e.length ? "CUENTA" : "CUENTAS", " · ", ee, " ", 1 === ee ? "PROYECTO" : "PROYECTOS"), e.length > 0 && React.createElement("button", {
+    }, "Se guarda automáticamente en este navegador. Para llevarlo a otra compu o sincronizarlo, abrí Configuración."), e.length > 0 && React.createElement("p", {
+        className: "font-label text-xs text-slate-500 tracking-wide mt-2"
+    }, e.length, " ", 1 === e.length ? "CUENTA" : "CUENTAS", " · ", ee, " ", 1 === ee ? "PROYECTO" : "PROYECTOS")), React.createElement("button", {
         type: "button",
-        onClick: () => {
-            exportAccounts(e), N(!1)
+        onClick: evt => {
+            settingsBtnRef.current = evt.currentTarget, k(!0)
         },
-        className: "flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
-    }, React.createElement(Icon, {
-        name: "download",
-        className: "w-3 h-3"
-    }), "EXPORTAR JSON"), e.length > 0 && y && React.createElement("span", {
-        className: "font-label text-xs text-amber-400 tracking-wide"
-    }, "· cambios sin exportar"), React.createElement("button", {
-        type: "button",
-        onClick: e => {
-            settingsBtnRef.current = e.currentTarget, k(!0)
-        },
-        "aria-label": "Configuración",
-        className: "flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
+        title: "Configuración",
+        "aria-label": "Abrir configuración",
+        className: "shrink-0 inline-flex items-center justify-center p-2.5 rounded-md border border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800 hover:border-slate-600 transition-colors"
+    }, React.createElement("span", {
+        className: "relative inline-block w-5 h-5"
     }, React.createElement(Icon, {
         name: "settings",
-        className: "w-3 h-3"
-    }), "CONFIGURACIÓN"), React.createElement("button", {
-        type: "button",
-        onClick: e => {
-            settingsBtnRef.current = e.currentTarget, k(!0)
-        },
-        className: "flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
-    }, React.createElement(Icon, {
-        name: "cloud",
-        className: "w-3 h-3",
-        fill: w.connected ? "currentColor" : "none"
-    }), w.connected ? "syncing" === w.status ? "SINCRONIZANDO..." : "NUBE: OK " + (w.lastSyncedAt ? "· " + timeAgo(w.lastSyncedAt) : "") : "SINCRONIZAR EN LA NUBE"), React.createElement("button", {
-        type: "button",
-        onClick: () => z.current && z.current.click(),
-        className: "flex items-center gap-1 font-label text-xs text-teal-400 hover:text-teal-300 transition-colors tracking-wide"
-    }, React.createElement(Icon, {
-        name: "upload",
-        className: "w-3 h-3"
-    }), "IMPORTAR JSON"), React.createElement("input", {
+        className: "w-5 h-5 block",
+        "aria-hidden": "true"
+    }), (y || w.connected && "syncing" === w.status) && React.createElement("span", {
+        className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-teal-400 ring-2 ring-slate-900",
+        "aria-hidden": "true"
+    })))), React.createElement("input", {
         ref: z,
         type: "file",
         accept: ".json",
@@ -1298,7 +1313,7 @@ function AccountsTracker() {
             }, n.readAsText(a), t.target.value = ""
         },
         className: "hidden"
-    }))), React.createElement("div", {
+    })), React.createElement("div", {
         className: "flex gap-1.5 mb-6 border-b border-slate-800"
     }, [{
         value: "accounts",
@@ -1439,7 +1454,20 @@ function AccountsTracker() {
                 }
             })), d(null)
         }(m.accountId, e)
-    }), C && React.createElement(SyncModal, {
+    }), C && React.createElement(SettingsModal, {
+        cloudSync: w,
+        hasUnsavedExport: y,
+        onExport: () => {
+            exportAccounts(e), N(!1)
+        },
+        onImportClick: () => z.current && z.current.click(),
+        onOpenSync: evt => {
+            syncBtnRef.current = evt.currentTarget, kS(!0)
+        },
+        onClose: () => {
+            k(!1), settingsBtnRef.current && settingsBtnRef.current.focus()
+        }
+    }), CS && React.createElement(SyncModal, {
         cloudSync: w,
         onConnect: (e, remember) => async function(e, remember) {
             S(e => ({
@@ -1487,7 +1515,7 @@ function AccountsTracker() {
             })), H("Sincronización desconectada en este dispositivo")
         },
         onClose: () => {
-            k(!1), settingsBtnRef.current && settingsBtnRef.current.focus()
+            kS(!1), syncBtnRef.current && syncBtnRef.current.focus()
         }
     }), h && React.createElement(ModalShell, {
         title: "error" === h.type ? "No se pudo importar" : "Importar cuentas",
@@ -2257,6 +2285,73 @@ function ModalShell({
     }))), a))
 }
 
+function SettingsModal({
+    cloudSync: e,
+    hasUnsavedExport: t,
+    onExport: a,
+    onImportClick: n,
+    onOpenSync: r,
+    onClose: c
+}) {
+    return React.createElement(ModalShell, {
+        title: "Configuración",
+        onCancel: c
+    }, React.createElement("div", {
+        className: "flex flex-col gap-5"
+    }, React.createElement("div", null, React.createElement("p", {
+        className: "font-label block text-xs text-slate-500 uppercase tracking-wide mb-2"
+    }, "Datos"), React.createElement("div", {
+        className: "flex flex-col gap-2"
+    }, React.createElement("button", {
+        type: "button",
+        onClick: a,
+        className: "flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+    }, React.createElement(Icon, {
+        name: "download",
+        className: "w-4 h-4",
+        "aria-hidden": "true"
+    }), "Exportar JSON", t && React.createElement("span", {
+        className: "font-label text-xs text-amber-400 ml-auto"
+    }, "cambios sin exportar")), React.createElement("button", {
+        type: "button",
+        onClick: n,
+        className: "flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+    }, React.createElement(Icon, {
+        name: "upload",
+        className: "w-4 h-4",
+        "aria-hidden": "true"
+    }), "Importar JSON"))), React.createElement("div", {
+        className: "border-t border-slate-700 pt-4"
+    }, React.createElement("p", {
+        className: "font-label block text-xs text-slate-500 uppercase tracking-wide mb-2"
+    }, "Sincronización en la nube"), React.createElement("div", {
+        className: "flex items-center justify-between gap-3"
+    }, React.createElement("div", {
+        className: "flex items-center gap-2 min-w-0"
+    }, React.createElement("span", {
+        className: "w-2 h-2 rounded-full shrink-0 " + (e.connected ? "bg-teal-400" : "bg-slate-600"),
+        "aria-hidden": "true"
+    }), React.createElement("p", {
+        className: "text-sm text-slate-300 truncate"
+    }, e.connected ? "syncing" === e.status ? "Sincronizando..." : "Conectado" + (e.lastSyncedAt ? " · " + timeAgo(e.lastSyncedAt) : "") : "No conectado")), React.createElement("button", {
+        type: "button",
+        onClick: r,
+        className: "shrink-0 px-3 py-1.5 rounded-md text-xs font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+    }, e.connected ? "Gestionar" : "Conectar")), React.createElement("p", {
+        className: "text-xs text-slate-500 mt-1.5"
+    }, "Cada pocos minutos se sincroniza sola; también podés forzarla desde acá.")), React.createElement("div", {
+        className: "border-t border-slate-700 pt-4"
+    }, React.createElement("p", {
+        className: "text-xs text-slate-500"
+    }, "Mis cuentas de Claude ", APP_VERSION)), React.createElement("div", {
+        className: "flex justify-end mt-1"
+    }, React.createElement("button", {
+        type: "button",
+        onClick: c,
+        className: "px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
+    }, "Cerrar"))))
+}
+
 function SyncModal({
     cloudSync: e,
     onConnect: t,
@@ -2266,13 +2361,11 @@ function SyncModal({
 }) {
     const [c, o] = useState(""), [remember, setRemember] = useState(e.remember !== !1), l = "connecting" === e.status, s = "syncing" === e.status;
     return React.createElement(ModalShell, {
-        title: "Configuración",
+        title: "Sincronización en la nube",
         onCancel: r
     }, React.createElement("div", {
         className: "flex flex-col gap-4"
-    }, React.createElement("div", null, React.createElement("p", {
-        className: "font-label text-xs tracking-wide text-slate-500 uppercase mb-2"
-    }, "Sincronización en la nube"), e.connected ? React.createElement(React.Fragment, null, React.createElement("div", {
+    }, e.connected ? React.createElement(React.Fragment, null, React.createElement("div", {
         className: "flex items-center gap-2"
     }, React.createElement("span", {
         className: "w-2 h-2 rounded-full bg-teal-400"
@@ -2343,18 +2436,14 @@ function SyncModal({
         className: "flex justify-end gap-2 mt-3"
     }, React.createElement("button", {
         type: "button",
+        onClick: r,
+        className: "px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
+    }, "Cancelar"), React.createElement("button", {
+        type: "button",
         disabled: !c.trim() || l,
         onClick: () => t(c.trim(), remember),
         className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    }, l ? "Conectando..." : "Conectar")))), React.createElement("div", {
-        className: "flex items-center justify-between gap-2"
-    }, React.createElement("p", {
-        className: "font-label text-xs text-slate-600 tracking-wide"
-    }, "Mis cuentas de Claude ", APP_VERSION), React.createElement("button", {
-        type: "button",
-        onClick: r,
-        className: "px-3.5 py-2 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-700 transition-colors"
-    }, "Cerrar"))))
+    }, l ? "Conectando..." : "Conectar")))))
 }
 
 function AccountModal({
