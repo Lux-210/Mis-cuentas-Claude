@@ -2768,7 +2768,7 @@ function SettingsModal({
         type: "button",
         onClick: () => setExportOpen(v => !v),
         "aria-expanded": exportOpen,
-        className: "w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+        className: "w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors" + (exportOpen ? " bg-slate-700" : "")
     }, React.createElement(Icon, {
         name: "download",
         className: "w-4 h-4",
@@ -2810,7 +2810,7 @@ function SettingsModal({
         type: "button",
         onClick: () => setImportOpen(v => !v),
         "aria-expanded": importOpen,
-        className: "w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+        className: "w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors" + (importOpen ? " bg-slate-700" : "")
     }, React.createElement(Icon, {
         name: "upload",
         className: "w-4 h-4",
