@@ -21,6 +21,12 @@
 <meta name="apple-mobile-web-app-title" content="Mis cuentas" />
 <meta name="mobile-web-app-capable" content="yes" />
 <script>
+  try {
+    var savedAccent = localStorage.getItem("mis-cuentas-claude-accent");
+    if (savedAccent) document.documentElement.setAttribute("data-accent", savedAccent);
+  } catch (e) {}
+</script>
+<script>
 /**
  * @license React
  * react.production.min.js
@@ -369,6 +375,63 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
   .border-t { border-top-width: 1px; }
   .pt-4 { padding-top: 1rem; }
   .gap-5 { gap: 1.25rem; }
+
+  /* Color de acento configurable (sección "Apariencia" de Configuración).
+     Por defecto (teal) coincide con los valores que ya usaba la app, igual
+     que en Mis DualSense: el resto del código usa clases .accent-* (abajo),
+     que leen estas variables --accent-* según el atributo [data-accent]. */
+  :root {
+    --accent-900: #134e4a; --accent-700: #0f766e; --accent-600: #0d9488;
+    --accent-500: #14b8a6; --accent-400: #2dd4bf; --accent-300: #5eead4;
+  }
+  html[data-accent="blue"] {
+    --accent-900: #1e3a8a; --accent-700: #1d4ed8; --accent-600: #2563eb;
+    --accent-500: #3b82f6; --accent-400: #60a5fa; --accent-300: #93c5fd;
+  }
+  html[data-accent="purple"] {
+    --accent-900: #4c1d95; --accent-700: #6d28d9; --accent-600: #7c3aed;
+    --accent-500: #8b5cf6; --accent-400: #a78bfa; --accent-300: #c4b5fd;
+  }
+  html[data-accent="pink"] {
+    --accent-900: #831843; --accent-700: #be185d; --accent-600: #db2777;
+    --accent-500: #ec4899; --accent-400: #f472b6; --accent-300: #f9a8d4;
+  }
+  html[data-accent="amber"] {
+    --accent-900: #78350f; --accent-700: #b45309; --accent-600: #d97706;
+    --accent-500: #f59e0b; --accent-400: #fbbf24; --accent-300: #fcd34d;
+  }
+  html[data-accent="red"] {
+    --accent-900: #7f1d1d; --accent-700: #b91c1c; --accent-600: #dc2626;
+    --accent-500: #ef4444; --accent-400: #f87171; --accent-300: #fca5a5;
+  }
+  html[data-accent="green"] {
+    --accent-900: #064e3b; --accent-700: #047857; --accent-600: #059669;
+    --accent-500: #10b981; --accent-400: #34d399; --accent-300: #6ee7b7;
+  }
+  .text-accent-300 { color: var(--accent-300); }
+  .text-accent-400 { color: var(--accent-400); }
+  .bg-accent-400 { background-color: var(--accent-400); }
+  .bg-accent-600 { background-color: var(--accent-600); }
+  .bg-accent-900 { background-color: var(--accent-900); }
+  .border-accent-400 { border-color: var(--accent-400); }
+  .border-accent-700 { border-color: var(--accent-700); }
+  .hover\:bg-accent-500:hover { background-color: var(--accent-500); }
+  .hover\:text-accent-300:hover { color: var(--accent-300); }
+  .focus\:ring-accent-400:focus { --tw-ring-color: var(--accent-400); }
+  .focus\:ring-accent-500:focus { --tw-ring-color: var(--accent-500); }
+  .focus\:border-accent-500:focus { border-color: var(--accent-500); }
+
+  /* Selector de color de acento dentro de Configuración. */
+  .ring-offset-2 { --tw-ring-offset-width: 2px; }
+  .ring-offset-slate-800 { --tw-ring-offset-color: #1e293b; }
+  .ring-slate-300 { --tw-ring-opacity: 1; --tw-ring-color: rgb(203 213 225/var(--tw-ring-opacity,1)); }
+  .scale-110 { --tw-scale-x: 1.1; --tw-scale-y: 1.1; transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+  .transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(.4,0,.2,1); transition-duration: .15s; }
+
+  /* Desplegables "Exportar"/"Importar" (JSON + CSV) dentro de Configuración,
+     sección Datos: mismo motivo que el resto de este bloque. */
+  .pb-3 { padding-bottom: .75rem; }
+  .disabled\:opacity-40:disabled { opacity: .4; }
 </style>
 </head>
 <body>
@@ -580,7 +643,7 @@ const PLAN_OPTIONS = ["Free", "Pro", "Max", "Otro"],
     STATUS_META = {
         en_proceso: {
             label: "En proceso",
-            badge: "bg-teal-900 text-teal-300 border-teal-700"
+            badge: "bg-accent-900 text-accent-300 border-accent-700"
         },
         pausado: {
             label: "Pausado",
@@ -596,7 +659,7 @@ const PLAN_OPTIONS = ["Free", "Pro", "Max", "Otro"],
         }
     },
     STATUS_DOT = {
-        en_proceso: "bg-teal-400",
+        en_proceso: "bg-accent-400",
         pausado: "bg-amber-400",
         abandonado: "bg-red-400",
         finalizado: "bg-slate-400"
@@ -614,7 +677,37 @@ const PLAN_OPTIONS = ["Free", "Pro", "Max", "Otro"],
     GH_GIST_DESCRIPTION = "Mis cuentas de Claude — datos (no editar a mano)",
     GH_GIST_FILENAME = "mis-cuentas-claude-data.json",
     GH_TOKEN_REMEMBER_KEY = "mis-cuentas-claude-gh-remember",
-    APP_VERSION = "v5";
+    APP_VERSION = "v5",
+    ACCENT_KEY = "mis-cuentas-claude-accent";
+const ACCENT_OPTIONS = [{
+    value: "teal",
+    label: "Verde azulado",
+    hex: "#14b8a6"
+}, {
+    value: "blue",
+    label: "Azul",
+    hex: "#3b82f6"
+}, {
+    value: "purple",
+    label: "Morado",
+    hex: "#8b5cf6"
+}, {
+    value: "pink",
+    label: "Rosa",
+    hex: "#ec4899"
+}, {
+    value: "amber",
+    label: "Ámbar",
+    hex: "#f59e0b"
+}, {
+    value: "red",
+    label: "Rojo",
+    hex: "#ef4444"
+}, {
+    value: "green",
+    label: "Esmeralda",
+    hex: "#10b981"
+}];
 async function ghRequest(e, t, a = {}) {
     const n = await fetch(`https://api.github.com${t}`, {
         ...a,
@@ -812,6 +905,261 @@ function uid() {
     return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
 }
 
+// ---------------------------------------------------------------------------
+// Exportar / importar CSV
+// ---------------------------------------------------------------------------
+
+function csvEscape(value) {
+    const s = null === value || void 0 === value ? "" : String(value);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+}
+
+function downloadCSV(rows, filename) {
+    const csv = rows.map(row => row.map(csvEscape).join(",")).join("\r\n"),
+        blob = new Blob(["﻿" + csv], {
+            type: "text/csv;charset=utf-8"
+        }),
+        url = URL.createObjectURL(blob),
+        a = document.createElement("a");
+    a.href = url, a.download = filename, document.body.appendChild(a), a.click(), document.body.removeChild(a), URL.revokeObjectURL(url)
+}
+
+// Arma las filas del CSV (una por proyecto, con los datos de la cuenta
+// repetidos, que es el nivel de detalle más útil para abrir en una planilla
+// de cálculo). Incluye los ID al final para poder reimportar el archivo sin
+// perder datos ni duplicar cuentas.
+function buildAccountsCSVRows(accounts) {
+    const header = ["Correo", "Plan", "Proyecto", "Estado", "Notas del proyecto", "Etiquetas", "Recordatorio", "Favorita", "Notas de la cuenta", "ID de la cuenta", "ID del proyecto"],
+        rows = [header];
+    return accounts.forEach(account => {
+        const accountExtras = [account.favorite ? "Sí" : "No", account.notes || ""];
+        0 === account.projects.length ? rows.push([account.email || "", account.plan || "", "", "", "", "", "", ...accountExtras, account.id, ""]) : account.projects.forEach(project => {
+            rows.push([account.email || "", account.plan || "", project.name || "", STATUS_META[normalizeStatus(project.status)].label, project.notes || "", (project.tags || []).join("; "), project.reminder ? formatDate(project.reminder) : "", ...accountExtras, account.id, project.id])
+        })
+    }), rows
+}
+
+function exportAccountsCSV(accounts) {
+    downloadCSV(buildAccountsCSVRows(accounts), `mis-cuentas-claude-${(new Date).toISOString().slice(0,10)}.csv`)
+}
+
+// ---------------------------------------------------------------------------
+// Importación de CSV
+// ---------------------------------------------------------------------------
+
+// Elige el separador (coma, punto y coma o tabulador) mirando la primera
+// línea: las planillas en español suelen guardar los CSV con punto y coma.
+function detectCSVDelimiter(text) {
+    const counts = {
+        ",": 0,
+        ";": 0,
+        "\t": 0
+    };
+    let inQuotes = !1;
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if ('"' === ch) inQuotes = !inQuotes;
+        else if (!inQuotes) {
+            if ("\n" === ch || "\r" === ch) break;
+            ch in counts && (counts[ch] += 1)
+        }
+    }
+    const best = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    return counts[best] > 0 ? best : ","
+}
+
+// Lector de CSV (RFC 4180): campos entre comillas, comillas dobles escapadas
+// y saltos de línea dentro de un campo.
+function parseCSVRows(text, delimiter) {
+    const rows = [];
+    let row = [],
+        cell = "",
+        inQuotes = !1;
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        inQuotes ? '"' === ch ? '"' === text[i + 1] ? (cell += '"', i += 1) : inQuotes = !1 : cell += ch : '"' === ch && "" === cell ? inQuotes = !0 : ch === delimiter ? (row.push(cell), cell = "") : "\n" === ch || "\r" === ch ? ("\r" === ch && "\n" === text[i + 1] && (i += 1), row.push(cell), cell = "", rows.push(row), row = []) : cell += ch
+    }
+    return ("" !== cell || row.length > 0) && (row.push(cell), rows.push(row)), rows
+}
+
+// Fechas como las escribe la app al exportar (día/mes/año) o en formato ISO.
+function parseCSVDate(text) {
+    const s = String(text).trim();
+    if (!s) return null;
+    let y, mo, d, m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:[ T].*)?$/);
+    if (m) y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    else {
+        if (!(m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4}|\d{2})(?:[ T,].*)?$/))) return null;
+        d = Number(m[1]), mo = Number(m[2]), y = 2 === m[3].length ? 2000 + Number(m[3]) : Number(m[3])
+    }
+    const date = new Date(y, mo - 1, d);
+    return date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d ? null : date.getTime()
+}
+
+// Nombre (sin tildes ni mayúsculas) de cada columna que entiende el importador.
+const CSV_FIELDS = {
+    email: "correo",
+    plan: "plan",
+    proyecto: "proyecto",
+    estado: "estado",
+    notasProyecto: "notas del proyecto",
+    etiquetas: "etiquetas",
+    recordatorio: "recordatorio",
+    favorita: "favorita",
+    notasCuenta: "notas de la cuenta",
+    idCuenta: "id de la cuenta",
+    idProyecto: "id del proyecto"
+};
+
+function csvHeaderKey(text) {
+    return normalizeText(text).replace(/\s+/g, " ").trim()
+}
+
+function csvIsTrue(value) {
+    return /^(si|s|yes|y|true|verdadero|1|x)$/.test(normalizeText(value).trim())
+}
+
+function csvCanonicalOption(value, options) {
+    const target = normalizeText(value).trim(),
+        found = options.find(option => normalizeText(option) === target);
+    return void 0 !== found ? found : null
+}
+
+function csvStatusKey(value, meta) {
+    const target = normalizeText(value).trim().replace(/[\s_]+/g, " ");
+    return Object.keys(meta).find(key => normalizeText(meta[key].label) === target || key.replace(/_/g, " ") === target) || null
+}
+
+// Convierte el texto de un CSV en cuentas listas para pasar por
+// mergeImportedAccounts. Reconoce los archivos que exporta la app y también
+// CSV armados a mano: solo hace falta la columna "Correo". El orden de las
+// columnas no importa. Si el CSV no trae ID, cada cuenta se reconoce contra
+// las que ya existen por correo, y cada proyecto por nombre.
+function buildCSVImport(text, existingAccounts) {
+    const clean = String(text).replace(/^﻿/, ""),
+        rows = parseCSVRows(clean, detectCSVDelimiter(clean)).filter(row => row.some(cell => cell.trim() !== ""));
+    if (0 === rows.length) throw new Error("El archivo está vacío.");
+    const headerKeys = rows[0].map(csvHeaderKey),
+        col = {};
+    Object.keys(CSV_FIELDS).forEach(field => {
+        col[field] = headerKeys.indexOf(CSV_FIELDS[field])
+    });
+    if (-1 === col.email) throw new Error("No se encontró la columna «Correo» en la primera fila del CSV.");
+    const warnings = {},
+        warn = label => {
+            warnings[label] = (warnings[label] || 0) + 1
+        },
+        get = (row, field) => col[field] >= 0 && col[field] < row.length ? String(row[col[field]]).trim() : "";
+
+    // Se agrupan las filas por cuenta. Una fila sin correo ni ID se considera
+    // continuación de la cuenta anterior (si trae un proyecto).
+    const groups = [],
+        groupsByKey = new Map;
+    let lastGroup = null;
+    rows.slice(1).forEach(row => {
+        const email = get(row, "email"),
+            idCuenta = get(row, "idCuenta");
+        let group;
+        if (email || idCuenta) {
+            const key = idCuenta ? "id:" + idCuenta : "e:" + normalizeText(email).trim();
+            group = groupsByKey.get(key), group || (group = {
+                idCuenta: idCuenta,
+                rows: []
+            }, groups.push(group), groupsByKey.set(key, group))
+        } else {
+            if (!(lastGroup && get(row, "proyecto"))) return void warn("Filas sin correo de cuenta (se omitieron)");
+            group = lastGroup
+        }
+        group.rows.push(row), lastGroup = group
+    });
+
+    const pick = (group, field) => {
+        for (let i = 0; i < group.rows.length; i++) {
+            const value = get(group.rows[i], field);
+            if (value) return value
+        }
+        return ""
+    }, dateOf = raw => {
+        if (!raw) return null;
+        const ts = parseCSVDate(raw);
+        return null === ts && warn("Fechas no reconocidas (se dejaron vacías)"), ts
+    };
+
+    const now = Date.now(),
+        usedExistingIds = new Set,
+        built = groups.map(group => {
+            const email = pick(group, "email");
+            let id = group.idCuenta,
+                existing = null;
+            id ? existing = existingAccounts.find(a => a.id === id) || null : (existing = existingAccounts.find(a => !usedExistingIds.has(a.id) && normalizeText(a.email).trim() === normalizeText(email).trim()) || null, id = existing ? existing.id : uid()), existing && usedExistingIds.add(existing.id);
+
+            let plan = "Free";
+            const planRaw = pick(group, "plan");
+            if (planRaw) {
+                const known = csvCanonicalOption(planRaw, PLAN_OPTIONS);
+                known ? plan = known : warn("Planes no reconocidos (se usó «Free»)")
+            }
+
+            const usedProjectIds = new Set,
+                projects = [];
+            group.rows.forEach(row => {
+                const name = get(row, "proyecto");
+                if (!name) return;
+                let projectId = get(row, "idProyecto");
+                if (!projectId && existing) {
+                    const match = existing.projects.find(p => !usedProjectIds.has(p.id) && normalizeText(p.name).trim() === normalizeText(name).trim());
+                    match && (projectId = match.id)
+                }(!projectId || usedProjectIds.has(projectId)) && (projectId = uid()), usedProjectIds.add(projectId);
+                let status = "en_proceso";
+                const statusRaw = get(row, "estado");
+                if (statusRaw) {
+                    const key = csvStatusKey(statusRaw, STATUS_META);
+                    key ? status = key : warn("Estados de proyecto no reconocidos (se usó «En proceso»)")
+                }
+                projects.push({
+                    id: projectId,
+                    name: name,
+                    status: status,
+                    notes: get(row, "notasProyecto"),
+                    createdAt: now,
+                    updatedAt: now,
+                    tags: get(row, "etiquetas").split(/[;,]/).map(tag => tag.trim()).filter(Boolean),
+                    reminder: dateOf(get(row, "recordatorio")),
+                    statusHistory: [{
+                        status: status,
+                        changedAt: now
+                    }]
+                })
+            });
+
+            return {
+                id: id,
+                email: email,
+                plan: plan,
+                notes: pick(group, "notasCuenta"),
+                favorite: csvIsTrue(pick(group, "favorita")),
+                projects: projects
+            }
+        });
+
+    return {
+        accounts: normalizeImportedAccounts(built),
+        warnings: Object.keys(warnings).map(label => label + ": " + warnings[label])
+    }
+}
+
+// Los CSV que guarda Excel sin BOM suelen venir en Windows-1252 y no en
+// UTF-8: si no se puede leer como UTF-8 se prueba con esa codificación.
+function decodeCSVBuffer(buffer) {
+    try {
+        return new TextDecoder("utf-8", {
+            fatal: !0
+        }).decode(buffer)
+    } catch (e) {
+        return new TextDecoder("windows-1252").decode(buffer)
+    }
+}
+
 function emptyAccount() {
     return {
         id: uid(),
@@ -928,6 +1276,18 @@ function loadFromStorage() {
     }
 }
 
+// Pide al navegador que no borre los datos de la app por su cuenta cuando se
+// queda sin espacio. Devuelve "granted", "denied" o "unsupported".
+async function requestPersistentStorage() {
+    try {
+        if (typeof navigator === "undefined" || !navigator.storage || typeof navigator.storage.persist !== "function") return "unsupported";
+        if (typeof navigator.storage.persisted === "function" && await navigator.storage.persisted()) return "granted";
+        return await navigator.storage.persist() ? "granted" : "denied"
+    } catch (e) {
+        return "unsupported"
+    }
+}
+
 function AccountsTracker() {
     const [e, t] = useState(() => loadFromStorage()), [a, n] = useState(""), [r, c] = useState("all"), [o, l] = useState("default"), [s, i] = useState(null), [m, d] = useState(null), [u, p] = useState(null), [f, x] = useState(null), [g, b] = useState(null), [E, R] = useState([]), [h, v] = useState(null), [y, N] = useState(!1), [w, S] = useState(() => {
         const remember = localStorage.getItem(GH_TOKEN_REMEMBER_KEY) !== "0",
@@ -943,7 +1303,13 @@ function AccountsTracker() {
             error: "",
             remember: remember
         }
-    }), [C, k] = useState(!1), [CS, kS] = useState(!1), [j, A] = useState(""), [I, T] = useState("accounts"), [UA, setUA] = useState(!1), M = useRef(null), D = useRef(!1), O = useRef(!0), P = useRef(null), _ = useRef(null), z = useRef(null), L = useRef(!0), G = useRef(e), settingsBtnRef = useRef(null), syncBtnRef = useRef(null), CRef = useRef(!1), CSRef = useRef(!1);
+    }), [C, k] = useState(!1), [CS, kS] = useState(!1), [j, A] = useState(""), [I, T] = useState("accounts"), [UA, setUA] = useState(!1), [persistStatus, setPersistStatus] = useState("checking"), [accent, setAccent] = useState(() => {
+        try {
+            return localStorage.getItem(ACCENT_KEY) || "teal"
+        } catch (e) {
+            return "teal"
+        }
+    }), M = useRef(null), D = useRef(!1), O = useRef(!0), P = useRef(null), _ = useRef(null), z = useRef(null), zCsv = useRef(null), L = useRef(!0), G = useRef(e), settingsBtnRef = useRef(null), syncBtnRef = useRef(null), CRef = useRef(!1), CSRef = useRef(!1);
     useEffect(() => {
         CRef.current = C
     }, [C]);
@@ -954,6 +1320,19 @@ function AccountsTracker() {
         const handleUpdateAvailable = () => setUA(!0);
         return window.addEventListener("mis-cuentas-claude-update-available", handleUpdateAvailable), () => window.removeEventListener("mis-cuentas-claude-update-available", handleUpdateAvailable)
     }, []);
+    useEffect(() => {
+        let cancelled = !1;
+        return requestPersistentStorage().then(status => {
+            cancelled || setPersistStatus(status)
+        }), () => {
+            cancelled = !0
+        }
+    }, []);
+    useEffect(() => {
+        try {
+            document.documentElement.setAttribute("data-accent", accent), localStorage.setItem(ACCENT_KEY, accent)
+        } catch (e) {}
+    }, [accent]);
     useEffect(() => {
         if (!C) return;
         let backButtonClosed = !1;
@@ -1179,7 +1558,7 @@ function AccountsTracker() {
         onClick: () => g && $()
     }, UA && React.createElement("div", {
         role: "status",
-        className: "fixed top-0 inset-x-0 z-50 bg-teal-600 text-white px-4 py-2 flex items-center justify-center gap-3 text-sm shadow-lg"
+        className: "fixed top-0 inset-x-0 z-50 bg-accent-600 text-white px-4 py-2 flex items-center justify-center gap-3 text-sm shadow-lg"
     }, React.createElement("span", null, "Hay una versión nueva de la app lista para usar."), React.createElement("button", {
         type: "button",
         onClick: () => window.location.reload(),
@@ -1248,7 +1627,7 @@ function AccountsTracker() {
     }, React.createElement("div", {
         className: "min-w-0"
     }, React.createElement("p", {
-        className: "font-label text-xs tracking-widest text-teal-400 uppercase mb-1"
+        className: "font-label text-xs tracking-widest text-accent-400 uppercase mb-1"
     }, "Directorio personal"), React.createElement("h1", {
         className: "font-display text-3xl sm:text-4xl text-slate-100"
     }, "Mis cuentas de ", React.createElement("span", {
@@ -1274,7 +1653,7 @@ function AccountsTracker() {
         className: "w-5 h-5 block",
         "aria-hidden": "true"
     }), (y || w.connected && "syncing" === w.status) && React.createElement("span", {
-        className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-teal-400 ring-2 ring-slate-900",
+        className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent-400 ring-2 ring-slate-900",
         "aria-hidden": "true"
     })))), React.createElement("input", {
         ref: z,
@@ -1313,6 +1692,45 @@ function AccountsTracker() {
             }, n.readAsText(a), t.target.value = ""
         },
         className: "hidden"
+    }), React.createElement("input", {
+        ref: zCsv,
+        type: "file",
+        accept: ".csv,text/csv",
+        onChange: function(t) {
+            const a = t.target.files && t.target.files[0];
+            if (!a) return;
+            const n = new FileReader;
+            n.onload = t => {
+                let built, warnings = [];
+                try {
+                    const text = decodeCSVBuffer(t.target.result),
+                        result = buildCSVImport(text, e);
+                    built = result.accounts, warnings = result.warnings
+                } catch (err) {
+                    return void v({
+                        type: "error",
+                        message: err && err.message ? err.message : "No se pudo importar el archivo. Verificá que sea un CSV exportado desde esta herramienta, o que tenga al menos una columna «Correo»."
+                    })
+                }
+                if (0 === built.length) return void v({
+                    type: "error",
+                    message: "El archivo no contiene cuentas para importar."
+                });
+                const r = mergeImportedAccounts(e, built);
+                v({
+                    type: "confirm",
+                    merge: r,
+                    duplicatesRemoved: 0,
+                    warnings: warnings
+                })
+            }, n.onerror = () => {
+                v({
+                    type: "error",
+                    message: "No se pudo leer el archivo."
+                })
+            }, n.readAsArrayBuffer(a), t.target.value = ""
+        },
+        className: "hidden"
     })), React.createElement("div", {
         className: "flex gap-1.5 mb-6 border-b border-slate-800"
     }, [{
@@ -1332,7 +1750,7 @@ function AccountsTracker() {
         key: e.value,
         onClick: () => T(e.value),
         "aria-pressed": I === e.value,
-        className: "flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors " + (I === e.value ? "border-teal-400 text-teal-300" : "border-transparent text-slate-500 hover:text-slate-300")
+        className: "flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors " + (I === e.value ? "border-accent-400 text-accent-300" : "border-transparent text-slate-500 hover:text-slate-300")
     }, React.createElement(Icon, {
         name: e.icon,
         className: "w-3.5 h-3.5"
@@ -1356,7 +1774,7 @@ function AccountsTracker() {
             mode: "new",
             data: emptyAccount()
         }),
-        className: "flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400"
+        className: "flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md bg-accent-600 text-white text-sm font-medium hover:bg-accent-500 transition-colors focus:outline-none focus:ring-2 focus:ring-accent-400"
     }, React.createElement(Icon, {
         name: "plus",
         className: "w-4 h-4"
@@ -1366,7 +1784,7 @@ function AccountsTracker() {
         value: r,
         onChange: e => c(e.target.value),
         "aria-label": "Filtrar por plan",
-        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }, React.createElement("option", {
         value: "all"
     }, "Todos los planes"), PLAN_OPTIONS.map(e => React.createElement("option", {
@@ -1376,7 +1794,7 @@ function AccountsTracker() {
         value: o,
         onChange: e => l(e.target.value),
         "aria-label": "Ordenar cuentas",
-        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }, React.createElement("option", {
         value: "default"
     }, "Orden: personalizado"), React.createElement("option", {
@@ -1455,15 +1873,23 @@ function AccountsTracker() {
             })), d(null)
         }(m.accountId, e)
     }), C && React.createElement(SettingsModal, {
+        accent: accent,
+        onChangeAccent: setAccent,
         cloudSync: w,
+        hasAccounts: e.length > 0,
         hasUnsavedExport: y,
-        onExport: () => {
+        onExportJSON: () => {
             exportAccounts(e), N(!1)
         },
-        onImportClick: () => z.current && z.current.click(),
+        onExportCSV: () => {
+            exportAccountsCSV(e), N(!1)
+        },
+        onImportJSONClick: () => z.current && z.current.click(),
+        onImportCSVClick: () => zCsv.current && zCsv.current.click(),
         onOpenSync: evt => {
             syncBtnRef.current = evt.currentTarget, kS(!0)
         },
+        persistStatus: persistStatus,
         onClose: () => {
             k(!1), settingsBtnRef.current && settingsBtnRef.current.focus()
         }
@@ -1530,7 +1956,7 @@ function AccountsTracker() {
         type: "button",
         autoFocus: !0,
         onClick: () => v(null),
-        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors"
     }, "Entendido"))) : React.createElement(React.Fragment, null, React.createElement("div", {
         className: "flex flex-col gap-2"
     }, h.merge.newCount > 0 && React.createElement("p", {
@@ -1543,7 +1969,14 @@ function AccountsTracker() {
         className: "text-sm text-slate-300"
     }, h.merge.renamedProjectsCount, " ", 1 === h.merge.renamedProjectsCount ? "proyecto se renombró" : "proyectos se renombraron", " ", "por coincidir en nombre con uno existente."), h.duplicatesRemoved > 0 && React.createElement("p", {
         className: "text-sm text-slate-300"
-    }, "Se encontraron ", h.duplicatesRemoved, " ", 1 === h.duplicatesRemoved ? "correo repetido" : "correos repetidos", " dentro del archivo; se conservó solo la primera aparición de cada uno."), React.createElement("p", {
+    }, "Se encontraron ", h.duplicatesRemoved, " ", 1 === h.duplicatesRemoved ? "correo repetido" : "correos repetidos", " dentro del archivo; se conservó solo la primera aparición de cada uno."), h.warnings && h.warnings.length > 0 && React.createElement("div", {
+        className: "flex flex-col gap-1"
+    }, React.createElement("p", {
+        className: "text-xs text-amber-400"
+    }, "Avisos sobre el archivo:"), h.warnings.map((warning, idx) => React.createElement("p", {
+        key: idx,
+        className: "text-xs text-slate-400"
+    }, "• " + warning))), React.createElement("p", {
         className: "text-sm text-slate-300"
     }, "Esta acción se puede deshacer.")), React.createElement("div", {
         className: "flex justify-end gap-2 mt-1"
@@ -1555,7 +1988,7 @@ function AccountsTracker() {
         type: "button",
         autoFocus: !0,
         onClick: () => V(h.merge.accounts, h.merge.addedAccountIds, h.merge.addedProjectIdsByAccount),
-        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors"
     }, "Importar"))))), E.length > 0 && React.createElement("div", {
         role: "status",
         "aria-live": "polite",
@@ -1570,7 +2003,7 @@ function AccountsTracker() {
         onClick: () => {
             e.undo(), R(t => t.filter(t => t.id !== e.id))
         },
-        className: "text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors"
+        className: "text-sm font-medium text-accent-400 hover:text-accent-300 transition-colors"
     }, "Deshacer")))))
 }
 
@@ -1591,7 +2024,7 @@ function SearchInput({
         onChange: e => t(e.target.value),
         placeholder: a,
         "aria-label": n,
-        className: "w-full pl-9 pr-9 py-2.5 rounded-md border border-slate-700 bg-slate-800 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "w-full pl-9 pr-9 py-2.5 rounded-md border border-slate-700 bg-slate-800 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }), e && React.createElement("button", {
         type: "button",
         onClick: () => t(""),
@@ -1620,7 +2053,7 @@ function EmptyState({
     }, "Agrega tu primer correo y los proyectos que tienes en esa cuenta."), React.createElement("button", {
         type: "button",
         onClick: e,
-        className: "flex items-center gap-1.5 px-4 py-2 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors"
+        className: "flex items-center gap-1.5 px-4 py-2 rounded-md bg-accent-600 text-white text-sm font-medium hover:bg-accent-500 transition-colors"
     }, React.createElement(Icon, {
         name: "plus",
         className: "w-4 h-4"
@@ -1661,13 +2094,13 @@ function AllProjectsView({
             type: "button",
             key: e.value,
             onClick: () => c(e.value),
-            className: "font-label px-2.5 py-1 text-xs font-medium uppercase tracking-wide rounded-full border transition-colors " + (r === e.value ? "bg-teal-900 text-teal-300 border-teal-700" : "border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-300")
+            className: "font-label px-2.5 py-1 text-xs font-medium uppercase tracking-wide rounded-full border transition-colors " + (r === e.value ? "bg-accent-900 text-accent-300 border-accent-700" : "border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-300")
         }, e.label, " (", t, ")")
     })), React.createElement("select", {
         value: o,
         onChange: e => l(e.target.value),
         "aria-label": "Ordenar todos los proyectos",
-        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }, React.createElement("option", {
         value: "name"
     }, "Orden: nombre (A-Z)"), React.createElement("option", {
@@ -1892,7 +2325,7 @@ function AccountCard({
         role: "button",
         tabIndex: 0,
         "aria-label": `Ver cuenta ${e.email||"sin correo"}`,
-        className: "bg-slate-800 border border-slate-700 rounded-lg p-4 flex flex-col gap-3 hover:border-slate-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500"
+        className: "bg-slate-800 border border-slate-700 rounded-lg p-4 flex flex-col gap-3 hover:border-slate-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-500"
     }, React.createElement("div", {
         className: "flex items-start justify-between gap-3"
     }, React.createElement("div", {
@@ -1989,7 +2422,7 @@ function ProjectSearchResultCard({
         role: "button",
         tabIndex: 0,
         "aria-label": `Ver proyecto ${e.name||"sin nombre"} en la cuenta ${t.email||"sin correo"}`,
-        className: "bg-slate-800 border border-slate-700 rounded-lg p-4 flex flex-col gap-2 hover:border-slate-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500"
+        className: "bg-slate-800 border border-slate-700 rounded-lg p-4 flex flex-col gap-2 hover:border-slate-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-500"
     }, React.createElement("p", {
         className: "font-label text-xs tracking-wide text-slate-500 uppercase truncate"
     }, "Proyecto en ", t.email || "sin correo"), React.createElement("div", {
@@ -2087,7 +2520,7 @@ function AccountDetail({
     }, w, " ", 1 === w ? "PROYECTO" : "PROYECTOS"), React.createElement("button", {
         type: "button",
         onClick: s,
-        className: "flex items-center gap-1.5 px-4 py-2.5 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors mb-6"
+        className: "flex items-center gap-1.5 px-4 py-2.5 rounded-md bg-accent-600 text-white text-sm font-medium hover:bg-accent-500 transition-colors mb-6"
     }, React.createElement(Icon, {
         name: "plus",
         className: "w-4 h-4"
@@ -2108,13 +2541,13 @@ function AccountDetail({
             type: "button",
             key: e.value,
             onClick: () => b(e.value),
-            className: "font-label px-2.5 py-1 text-xs font-medium uppercase tracking-wide rounded-full border transition-colors " + (g === e.value ? "bg-teal-900 text-teal-300 border-teal-700" : "border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-300")
+            className: "font-label px-2.5 py-1 text-xs font-medium uppercase tracking-wide rounded-full border transition-colors " + (g === e.value ? "bg-accent-900 text-accent-300 border-accent-700" : "border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-300")
         }, e.label, " (", t, ")")
     })), React.createElement("select", {
         value: E,
         onChange: e => R(e.target.value),
         "aria-label": "Ordenar proyectos",
-        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }, React.createElement("option", {
         value: "default"
     }, "Orden: personalizado"), React.createElement("option", {
@@ -2286,41 +2719,127 @@ function ModalShell({
 }
 
 function SettingsModal({
+    accent: ac,
+    onChangeAccent: oca,
     cloudSync: e,
+    hasAccounts: ha,
     hasUnsavedExport: t,
-    onExport: a,
-    onImportClick: n,
+    onExportJSON: a,
+    onExportCSV: aCsv,
+    onImportJSONClick: n,
+    onImportCSVClick: nCsv,
     onOpenSync: r,
+    persistStatus: ps,
     onClose: c
 }) {
+    const [exportOpen, setExportOpen] = useState(!1),
+        [importOpen, setImportOpen] = useState(!1),
+        showExportBadge = t && ha,
+        persistText = "granted" === ps ? "Almacenamiento protegido: el navegador no borrará estos datos por su cuenta." : "denied" === ps ? "Almacenamiento sin protección: si el dispositivo se queda sin espacio, el navegador podría borrar estos datos." : "";
     return React.createElement(ModalShell, {
         title: "Configuración",
         onCancel: c
     }, React.createElement("div", {
         className: "flex flex-col gap-5"
     }, React.createElement("div", null, React.createElement("p", {
+        className: "font-label block text-xs text-slate-500 uppercase tracking-wide mb-3"
+    }, "Apariencia"), React.createElement("div", {
+        className: "flex items-center gap-2"
+    }, ACCENT_OPTIONS.map(opt => React.createElement("button", {
+        key: opt.value,
+        type: "button",
+        onClick: () => oca(opt.value),
+        title: opt.label,
+        "aria-label": "Color de acento: " + opt.label,
+        "aria-pressed": ac === opt.value,
+        className: "w-5 h-5 rounded-full transition-transform " + (ac === opt.value ? "ring-2 ring-offset-2 ring-offset-slate-800 ring-slate-300 scale-110" : "opacity-70 hover:opacity-100"),
+        style: {
+            backgroundColor: opt.hex
+        }
+    })))), React.createElement("div", {
+        className: "border-t border-slate-700 pt-4"
+    }, React.createElement("p", {
         className: "font-label block text-xs text-slate-500 uppercase tracking-wide mb-2"
     }, "Datos"), React.createElement("div", {
         className: "flex flex-col gap-2"
+    }, React.createElement("div", {
+        className: "rounded-md border border-slate-600 overflow-hidden"
     }, React.createElement("button", {
         type: "button",
-        onClick: a,
-        className: "flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+        onClick: () => setExportOpen(v => !v),
+        "aria-expanded": exportOpen,
+        className: "w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
     }, React.createElement(Icon, {
         name: "download",
         className: "w-4 h-4",
         "aria-hidden": "true"
-    }), "Exportar JSON", t && React.createElement("span", {
+    }), "Exportar", showExportBadge && React.createElement("span", {
+        className: "w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0",
+        "aria-hidden": "true"
+    }), React.createElement(Icon, {
+        name: exportOpen ? "chevronUp" : "chevronDown",
+        className: "w-4 h-4 ml-auto text-slate-500",
+        "aria-hidden": "true"
+    })), exportOpen && React.createElement("div", {
+        className: "flex flex-col gap-2 px-3 pb-3 pt-1 border-t border-slate-700"
+    }, React.createElement("button", {
+        type: "button",
+        disabled: !ha,
+        onClick: a,
+        className: "w-full flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+    }, React.createElement(Icon, {
+        name: "download",
+        className: "w-4 h-4",
+        "aria-hidden": "true"
+    }), "Exportar JSON", showExportBadge && React.createElement("span", {
         className: "font-label text-xs text-amber-400 ml-auto"
     }, "cambios sin exportar")), React.createElement("button", {
         type: "button",
-        onClick: n,
-        className: "flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+        disabled: !ha,
+        onClick: aCsv,
+        className: "w-full flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+    }, React.createElement(Icon, {
+        name: "download",
+        className: "w-4 h-4",
+        "aria-hidden": "true"
+    }), "Exportar CSV", showExportBadge && React.createElement("span", {
+        className: "font-label text-xs text-amber-400 ml-auto"
+    }, "cambios sin exportar")))), React.createElement("div", {
+        className: "rounded-md border border-slate-600 overflow-hidden"
+    }, React.createElement("button", {
+        type: "button",
+        onClick: () => setImportOpen(v => !v),
+        "aria-expanded": importOpen,
+        className: "w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
     }, React.createElement(Icon, {
         name: "upload",
         className: "w-4 h-4",
         "aria-hidden": "true"
-    }), "Importar JSON"))), React.createElement("div", {
+    }), "Importar", React.createElement(Icon, {
+        name: importOpen ? "chevronUp" : "chevronDown",
+        className: "w-4 h-4 ml-auto text-slate-500",
+        "aria-hidden": "true"
+    })), importOpen && React.createElement("div", {
+        className: "flex flex-col gap-2 px-3 pb-3 pt-1 border-t border-slate-700"
+    }, React.createElement("button", {
+        type: "button",
+        onClick: n,
+        className: "w-full flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+    }, React.createElement(Icon, {
+        name: "upload",
+        className: "w-4 h-4",
+        "aria-hidden": "true"
+    }), "Importar JSON"), React.createElement("button", {
+        type: "button",
+        onClick: nCsv,
+        className: "w-full flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+    }, React.createElement(Icon, {
+        name: "upload",
+        className: "w-4 h-4",
+        "aria-hidden": "true"
+    }), "Importar CSV")))), persistText && React.createElement("p", {
+        className: "text-xs text-slate-500 mt-2"
+    }, persistText)), React.createElement("div", {
         className: "border-t border-slate-700 pt-4"
     }, React.createElement("p", {
         className: "font-label block text-xs text-slate-500 uppercase tracking-wide mb-2"
@@ -2329,14 +2848,14 @@ function SettingsModal({
     }, React.createElement("div", {
         className: "flex items-center gap-2 min-w-0"
     }, React.createElement("span", {
-        className: "w-2 h-2 rounded-full shrink-0 " + (e.connected ? "bg-teal-400" : "bg-slate-600"),
+        className: "w-2 h-2 rounded-full shrink-0 " + (e.connected ? "bg-accent-400" : "bg-slate-600"),
         "aria-hidden": "true"
     }), React.createElement("p", {
         className: "text-sm text-slate-300 truncate"
     }, e.connected ? "syncing" === e.status ? "Sincronizando..." : "Conectado" + (e.lastSyncedAt ? " · " + timeAgo(e.lastSyncedAt) : "") : "No conectado")), React.createElement("button", {
         type: "button",
         onClick: r,
-        className: "shrink-0 px-3 py-1.5 rounded-md text-xs font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+        className: "shrink-0 px-3 py-1.5 rounded-md text-xs font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors"
     }, e.connected ? "Gestionar" : "Conectar")), React.createElement("p", {
         className: "text-xs text-slate-500 mt-1.5"
     }, "Cada pocos minutos se sincroniza sola; también podés forzarla desde acá.")), React.createElement("div", {
@@ -2368,7 +2887,7 @@ function SyncModal({
     }, e.connected ? React.createElement(React.Fragment, null, React.createElement("div", {
         className: "flex items-center gap-2"
     }, React.createElement("span", {
-        className: "w-2 h-2 rounded-full bg-teal-400"
+        className: "w-2 h-2 rounded-full bg-accent-400"
     }), React.createElement("p", {
         className: "text-sm text-slate-200"
     }, "Conectado a GitHub")), React.createElement("p", {
@@ -2377,7 +2896,7 @@ function SyncModal({
         href: `https://gist.github.com/${e.gistId}`,
         target: "_blank",
         rel: "noopener noreferrer",
-        className: "text-xs text-teal-400 hover:text-teal-300 underline w-fit block mt-1"
+        className: "text-xs text-accent-400 hover:text-accent-300 underline w-fit block mt-1"
     }, "Ver el gist en GitHub"), e.error && React.createElement("p", {
         role: "alert",
         className: "text-xs text-red-400 mt-1"
@@ -2393,7 +2912,7 @@ function SyncModal({
         type: "button",
         disabled: s,
         onClick: a,
-        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     }, s ? "Sincronizando..." : "Sincronizar ahora"))) : React.createElement(React.Fragment, null, React.createElement("p", {
         className: "text-sm text-slate-300"
     }, "Guardá tus cuentas en un Gist privado de GitHub para que coincidan entre tu notebook y tu celular. Los datos viajan directo desde tu navegador a GitHub, sin pasar por ningún otro servidor."), React.createElement("ol", {
@@ -2402,7 +2921,7 @@ function SyncModal({
         href: "https://github.com/settings/tokens/new?scopes=gist&description=Mis+cuentas+de+Claude",
         target: "_blank",
         rel: "noopener noreferrer",
-        className: "text-teal-400 hover:text-teal-300 underline"
+        className: "text-accent-400 hover:text-accent-300 underline"
     }, "github.com/settings/tokens"), " ", "con el permiso ", React.createElement("span", {
         className: "font-label text-slate-300"
     }, "gist"), " únicamente."), React.createElement("li", null, "Copialo y pegalo acá abajo."), React.createElement("li", null, "En tu otro dispositivo, repetí este paso con el mismo token: va a encontrar este mismo gist solo.")), React.createElement("div", {
@@ -2418,7 +2937,7 @@ function SyncModal({
         onChange: e => o(e.target.value),
         onKeyDown: e => "Enter" === e.key && c.trim() && t(c.trim(), remember),
         placeholder: "ghp_...",
-        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     })), React.createElement("label", {
         htmlFor: "config-gh-remember-checkbox",
         className: "flex items-center gap-2 text-xs text-slate-400 mt-2"
@@ -2442,7 +2961,7 @@ function SyncModal({
         type: "button",
         disabled: !c.trim() || l,
         onClick: () => t(c.trim(), remember),
-        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     }, l ? "Conectando..." : "Conectar")))))
 }
 
@@ -2483,7 +3002,7 @@ function AccountModal({
         onKeyDown: e => "Enter" === e.key && p(),
         placeholder: "nombre@correo.com",
         "aria-invalid": !!d,
-        className: "w-full px-3 py-2 rounded-md border bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 " + (d ? "border-red-600 focus:ring-red-500 focus:border-red-500" : "border-slate-600 focus:ring-teal-500 focus:border-teal-500")
+        className: "w-full px-3 py-2 rounded-md border bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 " + (d ? "border-red-600 focus:ring-red-500 focus:border-red-500" : "border-slate-600 focus:ring-accent-500 focus:border-accent-500")
     }), d && React.createElement("p", {
         role: "alert",
         className: "text-xs text-red-400 mt-1"
@@ -2494,7 +3013,7 @@ function AccountModal({
         id: "account-plan-select",
         value: l,
         onChange: e => s(e.target.value),
-        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }, PLAN_OPTIONS.map(e => React.createElement("option", {
         key: e,
         value: e
@@ -2507,7 +3026,7 @@ function AccountModal({
         onChange: e => m(e.target.value),
         placeholder: "Para qué usás esta cuenta, cuándo revisarla...",
         rows: 2,
-        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     })), React.createElement("div", {
         className: "flex justify-end gap-2 mt-1"
     }, React.createElement("button", {
@@ -2517,7 +3036,7 @@ function AccountModal({
     }, "Cancelar"), React.createElement("button", {
         type: "button",
         onClick: p,
-        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors"
     }, "Guardar"))))
 }
 
@@ -2602,7 +3121,7 @@ function ProjectModal({
                 phase: "confirm",
                 existing: e
             }),
-            className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+            className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors"
         }, "Entendido"))))
     }
     const S = "edit" === e && Array.isArray(t.statusHistory) && t.statusHistory.length > 1 ? [...t.statusHistory].reverse() : [];
@@ -2625,7 +3144,7 @@ function ProjectModal({
         onKeyDown: e => "Enter" === e.key && N(),
         placeholder: "Ej: Landing page cliente X",
         "aria-invalid": x,
-        className: "w-full px-3 py-2 rounded-md border bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 " + (x ? "border-red-600 focus:ring-red-500 focus:border-red-500" : "border-slate-600 focus:ring-teal-500 focus:border-teal-500")
+        className: "w-full px-3 py-2 rounded-md border bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 " + (x ? "border-red-600 focus:ring-red-500 focus:border-red-500" : "border-slate-600 focus:ring-accent-500 focus:border-accent-500")
     }), x && React.createElement("p", {
         role: "alert",
         className: "text-xs text-red-400 mt-1"
@@ -2650,7 +3169,7 @@ function ProjectModal({
         value: d,
         onChange: e => u(e.target.value),
         placeholder: "cliente, urgente, personal...",
-        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }), React.createElement("p", {
         className: "text-xs text-slate-500 mt-1"
     }, "Separadas por coma.")), React.createElement("div", null, React.createElement("label", {
@@ -2665,7 +3184,7 @@ function ProjectModal({
         onChange: e => {
             f(e.target.value), e.target.value && "undefined" != typeof Notification && "default" === Notification.permission && Notification.requestPermission().catch(() => {})
         },
-        className: "flex-1 px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "flex-1 px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     }), p && React.createElement("button", {
         type: "button",
         onClick: () => f(""),
@@ -2679,7 +3198,7 @@ function ProjectModal({
         onChange: e => m(e.target.value),
         placeholder: "Contexto, próximos pasos, lo que sea útil...",
         rows: 3,
-        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+        className: "w-full px-3 py-2 rounded-md border border-slate-600 bg-slate-700 text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
     })), S.length > 0 && React.createElement("div", null, React.createElement("label", {
         className: "font-label block text-xs text-slate-500 uppercase tracking-wide mb-1.5"
     }, "Historial de estados"), React.createElement("div", {
@@ -2721,7 +3240,7 @@ function ProjectModal({
     }, "Cancelar"), !h && React.createElement("button", {
         type: "button",
         onClick: N,
-        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+        className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors"
     }, "Guardar"))))
 }
 class ErrorBoundary extends React.Component {
@@ -2751,7 +3270,7 @@ class ErrorBoundary extends React.Component {
         }, "La aplicación encontró un error inesperado. Tus cuentas guardadas no se perdieron."), React.createElement("button", {
             type: "button",
             onClick: () => window.location.reload(),
-            className: "px-3.5 py-2 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition-colors"
+            className: "px-3.5 py-2 rounded-md text-sm font-medium bg-accent-600 text-white hover:bg-accent-500 transition-colors"
         }, "Recargar la aplicación"))) : this.props.children
     }
 }
