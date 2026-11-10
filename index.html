@@ -433,6 +433,33 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
      sección Datos: mismo motivo que el resto de este bloque. */
   .pb-3 { padding-bottom: .75rem; }
   .disabled\:opacity-40:disabled { opacity: .4; }
+
+  /* Barra de desplazamiento delgada y discreta (igual que Mis DualSense),
+     sin el fondo oscuro/negro que pone por defecto el navegador al usar
+     colorScheme: "dark". Se aplica en toda la app. */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.55);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 </style>
 </head>
 <body>
