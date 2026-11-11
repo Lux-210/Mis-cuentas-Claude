@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mis-cuentas-claude-v5';
+const CACHE_NAME = 'mis-cuentas-claude-v6';
 
 const APP_SHELL = [
   './index.html',
@@ -65,8 +65,14 @@ self.addEventListener('fetch', event => {
   if (isOwnAppShell) {
     // Red primero: si estamos online, siempre mostramos la última versión publicada.
     // Si falla la red (offline), servimos la última copia guardada en caché.
+    //
+    // "cache: reload" es necesario además de la estrategia de arriba: sin esto,
+    // este fetch() puede devolver una copia que el propio navegador (no esta
+    // app) tenía guardada en su caché HTTP normal, y entonces "red primero"
+    // terminaría sirviendo una versión vieja igual, sin pasar realmente por
+    // la red.
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'reload' })
         .then(resp => {
           if (resp && resp.ok) {
             const copy = resp.clone();
